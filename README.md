@@ -2,6 +2,10 @@
 
 Hitchcock is a libre demo creation tool.
 
+## Dependencies
+
+- [GLFW 3](https://www.glfw.org/)
+
 ## TODO
 
 - Visual shader editor
@@ -10,7 +14,3 @@ Hitchcock is a libre demo creation tool.
 - Multi-track editor
 - Effect pipelines and transitions
 - Export to (packed) executable
-
-## Dependencies
-
-- [GLFW 3](https://www.glfw.org/)
