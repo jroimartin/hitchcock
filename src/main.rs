@@ -8,6 +8,8 @@ const INITIAL_HEIGHT: i32 = 600;
 fn main() {
     glfw::init().unwrap();
 
+    glfw::set_error_callback(Some(error_callback));
+
     glfw::window_hint(glfw::CONTEXT_VERSION_MAJOR, 4);
     glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 6);
     glfw::window_hint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
@@ -25,4 +27,8 @@ fn main() {
     }
 
     glfw::terminate()
+}
+
+fn error_callback(error_code: glfw::ErrorCode, description: &str) {
+    eprintln!("GLFW error: {description} ({error_code})");
 }

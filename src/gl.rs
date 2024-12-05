@@ -26,7 +26,7 @@ mod ffi {
             pub unsafe fn $name($($param: $type),*) -> $ret {
                 let f = $once.get_or_init(|| unsafe {
                     std::mem::transmute::<crate::glfw::GlProc, fn($($type),*) -> $ret>(
-                        crate::glfw::get_proc_address(stringify!($name)).unwrap(),
+                        crate::glfw::get_proc_address(stringify!($name)).expect("failed to get proc address"),
                     )
                 });
                 f($($param),*)
