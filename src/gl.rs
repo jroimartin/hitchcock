@@ -34,9 +34,9 @@ mod ffi {
         }
     }
 
-    glfn![glViewport, GL_VIEWPORT, (), x: GLint, y: GLint, width: GLsizei, height: GLsizei];
-    glfn![glClearColor, GL_CLEAR_COLOR, (), red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf];
     glfn![glClear, GL_CLEAR, (), mask: GLbitfield];
+    glfn![glClearColor, GL_CLEAR_COLOR, (), red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf];
+    glfn![glViewport, GL_VIEWPORT, (), x: GLint, y: GLint, width: GLsizei, height: GLsizei];
 }
 
 /// Indicates the buffers currently enabled for color writing.

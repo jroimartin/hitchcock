@@ -1,34 +1,13 @@
 //! GLFW bindings.
 
-use std::ffi::{c_void, CString, NulError};
-
-/// Opaque window object.
-#[repr(C)]
-pub struct Window {
-    _data: [u8; 0],
-    _marker: std::marker::PhantomData<(*mut u8, std::marker::PhantomPinned)>,
-}
-
-/// Opaque monitor object.
-#[repr(C)]
-pub struct Monitor {
-    _data: [u8; 0],
-    _marker: std::marker::PhantomData<(*mut u8, std::marker::PhantomPinned)>,
-}
-
-/// Generic function pointer used for returning client API function
-/// pointers.
-#[repr(transparent)]
-pub struct GlProc(*const c_void);
-
-unsafe impl Send for GlProc {}
-unsafe impl Sync for GlProc {}
+use std::{
+    ffi::{c_void, CString, NulError},
+    ptr,
+};
 
 #[allow(dead_code, non_snake_case)]
 mod ffi {
     use std::ffi::{c_char, c_int, c_void};
-
-    use super::{Monitor, Window};
 
     #[link(name = "glfw")]
     extern "C" {
@@ -36,36 +15,17 @@ mod ffi {
             width: c_int,
             height: c_int,
             title: *const c_char,
-            monitor: *mut Monitor,
-            share: *mut Window,
-        ) -> *mut Window;
+            monitor: *mut c_void,
+            share: *mut c_void,
+        ) -> *mut c_void;
         pub fn glfwGetProcAddress(procname: *const c_char) -> *const c_void;
         pub fn glfwInit() -> c_int;
-        pub fn glfwMakeContextCurrent(window: *mut Window);
+        pub fn glfwMakeContextCurrent(window: *mut c_void);
         pub fn glfwPollEvents();
-        pub fn glfwSwapBuffers(window: *mut Window);
+        pub fn glfwSwapBuffers(window: *mut c_void);
         pub fn glfwTerminate();
         pub fn glfwWindowHint(hint: c_int, value: c_int);
-        pub fn glfwWindowShouldClose(window: *mut Window) -> c_int;
-    }
-}
-
-/// A specialized result type for Glfw.
-type Result<T> = std::result::Result<T, Error>;
-
-/// The GLFW error type.
-#[derive(Debug)]
-pub enum Error {
-    /// Error when calling library function.
-    Ffi,
-
-    /// Invalid C string.
-    InvalidCString(NulError),
-}
-
-impl From<NulError> for Error {
-    fn from(err: NulError) -> Error {
-        Error::InvalidCString(err)
+        pub fn glfwWindowShouldClose(window: *mut c_void) -> c_int;
     }
 }
 
@@ -87,6 +47,41 @@ pub const OPENGL_CORE_PROFILE: i32 = 0x00032001;
 /// Request forward-compatible OpenGL profile.
 pub const OPENGL_COMPAT_PROFILE: i32 = 0x00032002;
 
+/// A specialized result type for Glfw.
+type Result<T> = std::result::Result<T, Error>;
+
+/// The GLFW error type.
+#[derive(Debug)]
+pub enum Error {
+    /// Error when calling library function.
+    Ffi,
+
+    /// Invalid C string.
+    InvalidCString(NulError),
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Error {
+        Error::InvalidCString(err)
+    }
+}
+
+/// Opaque window object.
+#[repr(transparent)]
+pub struct Window(*mut c_void);
+
+/// Opaque monitor object.
+#[repr(transparent)]
+pub struct Monitor(*mut c_void);
+
+/// Generic function pointer used for returning client API function
+/// pointers.
+#[repr(transparent)]
+pub struct GlProc(*const c_void);
+
+unsafe impl Send for GlProc {}
+unsafe impl Sync for GlProc {}
+
 /// Initializes the GLFW library.
 pub fn init() -> Result<()> {
     if unsafe { ffi::glfwInit() == 0 } {
@@ -101,20 +96,21 @@ pub fn terminate() {
 }
 
 /// Creates a window and its associated context.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
 pub fn create_window(
     width: i32,
     height: i32,
     title: &str,
-    monitor: *mut Monitor,
-    share: *mut Window,
-) -> Result<*mut Window> {
+    monitor: Option<&Monitor>,
+    share: Option<&Window>,
+) -> Result<Window> {
     let title = CString::new(title)?;
+    let monitor = monitor.map_or(ptr::null_mut(), |m| m.0);
+    let share = share.map_or(ptr::null_mut(), |w| w.0);
     let window = unsafe { ffi::glfwCreateWindow(width, height, title.as_ptr(), monitor, share) };
     if window.is_null() {
         return Err(Error::Ffi);
     }
-    Ok(window)
+    Ok(Window(window))
 }
 
 /// Returns the address of the specified function for the current
@@ -130,9 +126,8 @@ pub fn get_proc_address(procname: &str) -> Result<GlProc> {
 
 /// Makes the context of the specified window current for the calling
 /// thread.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn make_context_current(window: *mut Window) {
-    unsafe { ffi::glfwMakeContextCurrent(window) }
+pub fn make_context_current(window: &Window) {
+    unsafe { ffi::glfwMakeContextCurrent(window.0) }
 }
 
 /// Processes all pending events.
@@ -141,9 +136,8 @@ pub fn poll_events() {
 }
 
 /// Swaps the front and back buffers of the specified window.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn swap_buffers(window: *mut Window) {
-    unsafe { ffi::glfwSwapBuffers(window) }
+pub fn swap_buffers(window: &Window) {
+    unsafe { ffi::glfwSwapBuffers(window.0) }
 }
 
 /// Sets the specified window hint to the desired value.
@@ -152,7 +146,6 @@ pub fn window_hint(hint: i32, value: i32) {
 }
 
 /// Checks the close flag of the specified window.
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
-pub fn window_should_close(window: *mut Window) -> bool {
-    unsafe { ffi::glfwWindowShouldClose(window) != 0 }
+pub fn window_should_close(window: &Window) -> bool {
+    unsafe { ffi::glfwWindowShouldClose(window.0) != 0 }
 }
