@@ -1,3 +1,5 @@
+//! Hitchcock is a libre demo creation tool.
+
 use std::ptr;
 
 use hitchcock::{gl, glfw};
