@@ -1,7 +1,7 @@
 //! GLFW bindings.
 
 use std::{
-    ffi::{c_char, c_void, CStr, CString, NulError},
+    ffi::{c_char, c_int, c_void, CStr, CString, NulError},
     fmt, ptr,
     sync::Mutex,
 };
@@ -238,12 +238,11 @@ pub fn poll_events() {
     unsafe { ffi::glfwPollEvents() }
 }
 
-/// Function pointer type for error callbacks.
 type FnError = fn(error_code: ErrorCode, description: &str);
 
 static ERROR_CALLBACK: Mutex<Option<FnError>> = Mutex::new(None);
 
-fn error_callback(error_code: i32, description: *const c_char) {
+extern "C" fn error_callback(error_code: c_int, description: *const c_char) {
     let cb = ERROR_CALLBACK
         .lock()
         .unwrap()
