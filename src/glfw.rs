@@ -190,7 +190,6 @@ pub fn init() -> Result<()> {
     if unsafe { ffi::glfwInit() == 0 } {
         return Err(Error::Ffi);
     }
-    unsafe { ffi::glfwSetErrorCallback(error_callback as *const c_void) };
     Ok(())
 }
 
@@ -245,9 +244,10 @@ type FnError = fn(error_code: ErrorCode, description: &str);
 static ERROR_CALLBACK: Mutex<Option<FnError>> = Mutex::new(None);
 
 fn error_callback(error_code: i32, description: *const c_char) {
-    let Some(cb) = *ERROR_CALLBACK.lock().unwrap() else {
-        return;
-    };
+    let cb = ERROR_CALLBACK
+        .lock()
+        .unwrap()
+        .expect("GLFW error callback is not set");
     let description = unsafe { CStr::from_ptr(description) }
         .to_str()
         .expect("GLFW error description is not a valid UTF-8 string");
@@ -257,6 +257,12 @@ fn error_callback(error_code: i32, description: *const c_char) {
 /// Sets the error callback.
 pub fn set_error_callback(callback: Option<FnError>) {
     *ERROR_CALLBACK.lock().unwrap() = callback;
+    let cb = if callback.is_some() {
+        error_callback as *const c_void
+    } else {
+        ptr::null()
+    };
+    unsafe { ffi::glfwSetErrorCallback(cb) };
 }
 
 /// Swaps the front and back buffers of the specified window.
