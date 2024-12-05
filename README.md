@@ -11,6 +11,6 @@ Hitchcock is a libre demo creation tool.
 - Effect pipelines and transitions
 - Export to (packed) executable
 
-## Requirements
+## Dependencies
 
 - [GLFW 3](https://www.glfw.org/)
