@@ -8,25 +8,16 @@ use std::{
 
 #[allow(dead_code, non_snake_case)]
 mod ffi {
-    use std::ffi::{c_char, c_double, c_float, c_int, c_short, c_uchar, c_uint, c_ushort, c_void};
+    use std::ffi::{c_char, c_float, c_int, c_uchar, c_uint, c_void};
 
     pub type GLenum = c_uint;
     pub type GLboolean = c_uchar;
     pub type GLbitfield = c_uint;
-    pub type GLvoid = c_void;
-    pub type GLbyte = c_char;
     pub type GLchar = c_char;
-    pub type GLshort = c_short;
     pub type GLint = c_int;
-    pub type GLubyte = c_uchar;
-    pub type GLuchar = c_uchar;
-    pub type GLushort = c_ushort;
     pub type GLuint = c_uint;
     pub type GLsizei = c_int;
-    pub type GLfloat = c_float;
     pub type GLclampf = c_float;
-    pub type GLdouble = c_double;
-    pub type GLclampd = c_double;
     pub type GLsizeiptr = usize;
 
     macro_rules! glfn {
