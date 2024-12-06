@@ -71,8 +71,8 @@ fn main() {
     gl::vertex_attrib_pointer(0, 3, gl::FLOAT, false, 3 * mem::size_of::<f32>(), 0);
     gl::enable_vertex_attrib_array(0);
 
-    gl::bind_buffer(gl::ARRAY_BUFFER, 0);
-    gl::bind_vertex_array(0);
+    gl::bind_buffer(gl::ARRAY_BUFFER, gl::Buffer::zero());
+    gl::bind_vertex_array(gl::VertexArray::zero());
 
     while !glfw::window_should_close(window) {
         gl::clear_color(0.2, 0.3, 0.3, 1.0);

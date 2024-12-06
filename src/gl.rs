@@ -87,19 +87,53 @@ pub const FLOAT: u32 = 0x1406;
 /// Triangles primitive.
 pub const TRIANGLES: u32 = 0x0004;
 
+/// Shader object.
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct Shader(u32);
+
+/// Program object.
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct Program(u32);
+
+/// Vertex array object.
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct VertexArray(u32);
+
+impl VertexArray {
+    /// Returns the reserved vertex array zero.
+    pub fn zero() -> VertexArray {
+        VertexArray(0)
+    }
+}
+
+/// Buffer object.
+#[derive(Clone, Copy)]
+#[repr(transparent)]
+pub struct Buffer(u32);
+
+impl Buffer {
+    /// Returns the reserved buffer object zero.
+    pub fn zero() -> Buffer {
+        Buffer(0)
+    }
+}
+
 /// Attaches a shader object to a program object.
-pub fn attach_shader(program: u32, shader: u32) {
-    unsafe { ffi::glAttachShader(program, shader) }
+pub fn attach_shader(program: Program, shader: Shader) {
+    unsafe { ffi::glAttachShader(program.0, shader.0) }
 }
 
 /// Binds a named buffer object.
-pub fn bind_buffer(target: u32, buffer: u32) {
-    unsafe { ffi::glBindBuffer(target, buffer) }
+pub fn bind_buffer(target: u32, buffer: Buffer) {
+    unsafe { ffi::glBindBuffer(target, buffer.0) }
 }
 
 /// Binds a vertex array object.
-pub fn bind_vertex_array(array: u32) {
-    unsafe { ffi::glBindVertexArray(array) }
+pub fn bind_vertex_array(array: VertexArray) {
+    unsafe { ffi::glBindVertexArray(array.0) }
 }
 
 /// Creates and initializes a buffer object's data store.
@@ -125,18 +159,20 @@ pub fn clear_color(red: f32, green: f32, blue: f32, alpha: f32) {
 }
 
 /// Compiles a shader object.
-pub fn compile_shader(shader: u32) {
-    unsafe { ffi::glCompileShader(shader) }
+pub fn compile_shader(shader: Shader) {
+    unsafe { ffi::glCompileShader(shader.0) }
 }
 
 /// Creates a program object.
-pub fn create_program() -> u32 {
-    unsafe { ffi::glCreateProgram() }
+pub fn create_program() -> Program {
+    let program = unsafe { ffi::glCreateProgram() };
+    Program(program)
 }
 
 /// Creates a shader object.
-pub fn create_shader(typ: u32) -> u32 {
-    unsafe { ffi::glCreateShader(typ) }
+pub fn create_shader(typ: u32) -> Shader {
+    let shader = unsafe { ffi::glCreateShader(typ) };
+    Shader(shader)
 }
 
 type FnError = fn(source: u32, typ: u32, id: u32, severity: u32, length: i32, message: &str);
@@ -169,22 +205,22 @@ pub fn debug_message_callback(callback: FnError) {
 }
 
 /// Deletes named buffer objects.
-pub fn delete_buffers(buffers: Vec<u32>) {
+pub fn delete_buffers(buffers: Vec<Buffer>) {
     unsafe { ffi::glDeleteBuffers(buffers.len() as i32, buffers.as_ptr() as *mut u32) }
 }
 
 /// Deletes a program object.
-pub fn delete_program(program: u32) {
-    unsafe { ffi::glDeleteProgram(program) }
+pub fn delete_program(program: Program) {
+    unsafe { ffi::glDeleteProgram(program.0) }
 }
 
 /// Deletes a shader object.
-pub fn delete_shader(shader: u32) {
-    unsafe { ffi::glDeleteShader(shader) }
+pub fn delete_shader(shader: Shader) {
+    unsafe { ffi::glDeleteShader(shader.0) }
 }
 
 /// Deletes vertex array objects.
-pub fn delete_vertex_arrays(arrays: Vec<u32>) {
+pub fn delete_vertex_arrays(arrays: Vec<VertexArray>) {
     unsafe { ffi::glDeleteVertexArrays(arrays.len() as i32, arrays.as_ptr() as *mut u32) }
 }
 
@@ -204,15 +240,15 @@ pub fn enable_vertex_attrib_array(index: u32) {
 }
 
 /// Generates buffer object names.
-pub fn gen_buffers(n: usize) -> Vec<u32> {
-    let buffers = vec![0u32; n];
+pub fn gen_buffers(n: usize) -> Vec<Buffer> {
+    let buffers = vec![Buffer::zero(); n];
     unsafe { ffi::glGenBuffers(n as i32, buffers.as_ptr() as *mut ffi::GLuint) };
     buffers
 }
 
 /// Generates vertex array object names.
-pub fn gen_vertex_arrays(n: usize) -> Vec<u32> {
-    let arrays = vec![0u32; n];
+pub fn gen_vertex_arrays(n: usize) -> Vec<VertexArray> {
+    let arrays = vec![VertexArray::zero(); n];
     unsafe { ffi::glGenVertexArrays(n as i32, arrays.as_ptr() as *mut ffi::GLuint) };
     arrays
 }
@@ -223,24 +259,24 @@ pub fn get_error() -> u32 {
 }
 
 /// Links a program object.
-pub fn link_program(program: u32) {
-    unsafe { ffi::glLinkProgram(program) }
+pub fn link_program(program: Program) {
+    unsafe { ffi::glLinkProgram(program.0) }
 }
 
 /// Replaces the source code in a shader object.
-pub fn shader_source(shader: u32, sources: &[&str]) {
+pub fn shader_source(shader: Shader, sources: &[&str]) {
     let count = sources.len();
     let strings: Vec<*const ffi::GLchar> = sources
         .iter()
         .map(|s| s.as_ptr() as *const ffi::GLchar)
         .collect();
     let lengths: Vec<i32> = sources.iter().map(|s| s.len() as i32).collect();
-    unsafe { ffi::glShaderSource(shader, count as i32, strings.as_ptr(), lengths.as_ptr()) }
+    unsafe { ffi::glShaderSource(shader.0, count as i32, strings.as_ptr(), lengths.as_ptr()) }
 }
 
 /// Installs a program object as part of current rendering state.
-pub fn use_program(program: u32) {
-    unsafe { ffi::glUseProgram(program) }
+pub fn use_program(program: Program) {
+    unsafe { ffi::glUseProgram(program.0) }
 }
 
 /// Defines an array of generic vertex attribute data.

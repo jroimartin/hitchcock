@@ -76,7 +76,7 @@ unsafe impl Send for Window {}
 unsafe impl Sync for Window {}
 
 /// Monitor object pointer.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct Monitor(*mut c_void);
 
@@ -85,7 +85,7 @@ unsafe impl Sync for Monitor {}
 
 /// Generic function pointer used for returning client API function
 /// pointers.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct GlProc(*const c_void);
 
