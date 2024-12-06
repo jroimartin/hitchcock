@@ -44,10 +44,10 @@ mod ffi {
     glfn![glCreateProgram, GL_CREATE_PROGRAM, GLuint];
     glfn![glCreateShader, GL_CREATE_SHADER, GLuint, shaderType: GLenum];
     glfn![glDebugMessageCallback, GL_DEBUG_MESSAGE_CALLBACK, (), callback: *const c_void, userParam: *const c_void];
-    glfn![glDeleteBuffers, GL_DELETE_BUFFERS, (), n: GLsizei, buffers: *mut GLuint];
+    glfn![glDeleteBuffers, GL_DELETE_BUFFERS, (), n: GLsizei, buffers: *const GLuint];
     glfn![glDeleteProgram, GL_DELETE_PROGRAM, (), program: GLuint];
     glfn![glDeleteShader, GL_DELETE_SHADER, (), shader: GLuint];
-    glfn![glDeleteVertexArrays, GL_DELETE_VERTEX_ARRAYS, (), n: GLsizei, arrays: *mut GLuint];
+    glfn![glDeleteVertexArrays, GL_DELETE_VERTEX_ARRAYS, (), n: GLsizei, arrays: *const GLuint];
     glfn![glDrawArrays, GL_DRAW_ARRAYS, (), mode: GLenum, first: GLint, count: GLsizei];
     glfn![glEnable, GL_ENABLE, (), cap: GLenum];
     glfn![glEnableVertexAttribArray, GL_ENABLE_VERTEX_ATTRIB_ARRAY, (), index: GLuint];
