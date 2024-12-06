@@ -6,7 +6,7 @@ use std::{
     sync::Mutex,
 };
 
-#[allow(dead_code, non_snake_case)]
+#[allow(non_snake_case)]
 mod ffi {
     use std::ffi::{c_char, c_float, c_int, c_uchar, c_uint, c_void};
 

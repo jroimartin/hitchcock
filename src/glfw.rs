@@ -7,7 +7,7 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-#[allow(dead_code, non_snake_case)]
+#[allow(non_snake_case)]
 mod ffi {
     use std::ffi::{c_char, c_int, c_void};
 
