@@ -1,9 +1,10 @@
 //! GLFW bindings.
 
 use std::{
+    collections::HashMap,
     ffi::{c_char, c_int, c_void, CStr, CString, NulError},
     fmt, ptr,
-    sync::Mutex,
+    sync::{LazyLock, Mutex},
 };
 
 #[allow(dead_code, non_snake_case)]
@@ -24,6 +25,10 @@ mod ffi {
         pub fn glfwMakeContextCurrent(window: *mut c_void);
         pub fn glfwPollEvents();
         pub fn glfwSetErrorCallback(callback: *const c_void) -> *const c_void;
+        pub fn glfwSetFramebufferSizeCallback(
+            window: *mut c_void,
+            callback: *const c_void,
+        ) -> *const c_void;
         pub fn glfwSwapBuffers(window: *mut c_void);
         pub fn glfwTerminate();
         pub fn glfwWindowHint(hint: c_int, value: c_int);
@@ -40,14 +45,8 @@ pub const CONTEXT_VERSION_MINOR: i32 = 0x00022003;
 /// OpenGL profile hint and attribute.
 pub const OPENGL_PROFILE: i32 = 0x00022008;
 
-/// Do not request a specific OpenGL profile.
-pub const OPENGL_ANY_PROFILE: i32 = 0;
-
 /// Request core OpenGL profile.
 pub const OPENGL_CORE_PROFILE: i32 = 0x00032001;
-
-/// Request forward-compatible OpenGL profile.
-pub const OPENGL_COMPAT_PROFILE: i32 = 0x00032002;
 
 /// A specialized result type for Glfw.
 type Result<T> = std::result::Result<T, Error>;
@@ -68,16 +67,25 @@ impl From<NulError> for Error {
     }
 }
 
-/// Opaque window object.
+/// Window object pointer.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Window(*mut c_void);
 
-/// Opaque monitor object.
+unsafe impl Send for Window {}
+unsafe impl Sync for Window {}
+
+/// Monitor object pointer.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Monitor(*mut c_void);
 
+unsafe impl Send for Monitor {}
+unsafe impl Sync for Monitor {}
+
 /// Generic function pointer used for returning client API function
 /// pointers.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct GlProc(*const c_void);
 
@@ -203,8 +211,8 @@ pub fn create_window(
     width: i32,
     height: i32,
     title: &str,
-    monitor: Option<&Monitor>,
-    share: Option<&Window>,
+    monitor: Option<Monitor>,
+    share: Option<Window>,
 ) -> Result<Window> {
     let title = CString::new(title)?;
     let monitor = monitor.map_or(ptr::null_mut(), |m| m.0);
@@ -229,7 +237,7 @@ pub fn get_proc_address(procname: &str) -> Result<GlProc> {
 
 /// Makes the context of the specified window current for the calling
 /// thread.
-pub fn make_context_current(window: &Window) {
+pub fn make_context_current(window: Window) {
     unsafe { ffi::glfwMakeContextCurrent(window.0) }
 }
 
@@ -264,8 +272,38 @@ pub fn set_error_callback(callback: Option<FnError>) {
     unsafe { ffi::glfwSetErrorCallback(cb) };
 }
 
+type FnFramebufferSize = fn(window: Window, width: i32, height: i32);
+
+static FRAMEBUFFER_SIZE_CALLBACKS: LazyLock<Mutex<HashMap<Window, Option<FnFramebufferSize>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+extern "C" fn framebuffer_size_callback(window: *mut c_void, width: c_int, height: c_int) {
+    let window = Window(window);
+    let cb = FRAMEBUFFER_SIZE_CALLBACKS
+        .lock()
+        .unwrap()
+        .get(&window)
+        .expect("unknown GLFW window")
+        .expect("GLFW framebuffer size callback is not set");
+    cb(window, width, height);
+}
+
+/// Sets the framebuffer resize callback for the specified window.
+pub fn set_framebuffer_size_callback(window: Window, callback: Option<FnFramebufferSize>) {
+    FRAMEBUFFER_SIZE_CALLBACKS
+        .lock()
+        .unwrap()
+        .insert(window, callback);
+    let cb = if callback.is_some() {
+        framebuffer_size_callback as *const c_void
+    } else {
+        ptr::null()
+    };
+    unsafe { ffi::glfwSetFramebufferSizeCallback(window.0, cb) };
+}
+
 /// Swaps the front and back buffers of the specified window.
-pub fn swap_buffers(window: &Window) {
+pub fn swap_buffers(window: Window) {
     unsafe { ffi::glfwSwapBuffers(window.0) }
 }
 
@@ -275,6 +313,6 @@ pub fn window_hint(hint: i32, value: i32) {
 }
 
 /// Checks the close flag of the specified window.
-pub fn window_should_close(window: &Window) -> bool {
+pub fn window_should_close(window: Window) -> bool {
     unsafe { ffi::glfwWindowShouldClose(window.0) != 0 }
 }
