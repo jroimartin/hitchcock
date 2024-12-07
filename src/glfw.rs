@@ -106,11 +106,7 @@ define_enum! {
         VersionUnavailable   => (0x00010007, "The requested OpenGL or OpenGL ES version is not available"),
         PlatformError        => (0x00010008, "A platform-specific error occurred that does not match any of the more specific categories"),
         FormatUnavailable    => (0x00010009, "The requested format is not supported or available"),
-        NoWindowContext      => (0x0001000A, "The specified window does not have an OpenGL or OpenGL ES context"),
-        CursorUnavailable    => (0x0001000B, "The specified cursor shape is not available"),
-        FeatureUnavailable   => (0x0001000C, "The requested feature is not provided by the platform"),
-        FeatureUnimplemented => (0x0001000D, "The requested feature is not implemented for the platform"),
-        PlatformUnavailable  => (0x0001000E, "Platform unavailable or no matching platform was found"),
+        NoWindowContext      => (0x0001000a, "The specified window does not have an OpenGL or OpenGL ES context"),
     }
 }
 

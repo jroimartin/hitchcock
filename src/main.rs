@@ -44,7 +44,7 @@ fn main() {
     glfw::set_framebuffer_size_callback(window, Some(glfw_framebuffer_size_callback));
 
     gl::enable(gl::DEBUG_OUTPUT);
-    gl::debug_message_callback(gl_error_callback);
+    gl::debug_message_callback(gl_debug_callback);
 
     let vertex_shader = gl::create_shader(gl::VERTEX_SHADER);
     gl::shader_source(vertex_shader, &[VERTEX_SHADER_SOURCE]);
@@ -101,6 +101,12 @@ fn glfw_framebuffer_size_callback(_window: glfw::Window, width: i32, height: i32
     gl::viewport(0, 0, width, height);
 }
 
-fn gl_error_callback(source: u32, typ: u32, id: u32, severity: u32, length: i32, message: &str) {
-    eprintln!("GL error: source={source}, type={typ}, id={id}, severity={severity}, length={length}, message={message}");
+fn gl_debug_callback(
+    source: gl::DebugSource,
+    typ: gl::DebugType,
+    id: u32,
+    severity: gl::DebugSeverity,
+    message: &str,
+) {
+    eprintln!("GL debug: {typ} ({severity}): {source}: {message} ({id})");
 }

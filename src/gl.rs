@@ -6,6 +6,8 @@ use std::{
     sync::Mutex,
 };
 
+use crate::macros::define_enum;
+
 #[allow(non_snake_case)]
 mod ffi {
     use std::ffi::{c_char, c_float, c_int, c_uchar, c_uint, c_void};
@@ -121,6 +123,40 @@ impl Buffer {
     }
 }
 
+define_enum! {
+    DebugSource(u32, "Debug source") {
+        Api            => (0x8246, "API"),
+        WindowSystem   => (0x8247, "Window system"),
+        ShaderCompiler => (0x8248, "Shader compiler"),
+        ThirdParty     => (0x8249, "Third party"),
+        Application    => (0x824a, "Application"),
+        Other          => (0x824b, "Other"),
+    }
+}
+
+define_enum! {
+    DebugType(u32, "Debug type") {
+        Error              => (0x824c, "Error"),
+        DeprecatedBehavior => (0x824d, "Deprecated behavior"),
+        UndefinedBehavior  => (0x824e, "Undefined behavior"),
+        Portability        => (0x824f, "Portability"),
+        Performance        => (0x8250, "Performance"),
+        Marker             => (0x8268, "Marker"),
+        PushGroup          => (0x8269, "Push group"),
+        PopGroup           => (0x826a, "Pop group"),
+        Other              => (0x8251, "Other"),
+    }
+}
+
+define_enum! {
+    DebugSeverity(u32, "Debug severity") {
+        High         => (0x9146, "High"),
+        Medium       => (0x9147, "Medium"),
+        Low          => (0x9148, "Low"),
+        Notification => (0x826b, "Notification"),
+    }
+}
+
 /// Attaches a shader object to a program object.
 pub fn attach_shader(program: Program, shader: Shader) {
     unsafe { ffi::glAttachShader(program.0, shader.0) }
@@ -175,33 +211,34 @@ pub fn create_shader(typ: u32) -> Shader {
     Shader(shader)
 }
 
-type FnError = fn(source: u32, typ: u32, id: u32, severity: u32, length: i32, message: &str);
+type FnDebug =
+    fn(source: DebugSource, typ: DebugType, id: u32, severity: DebugSeverity, message: &str);
 
-static ERROR_CALLBACK: Mutex<Option<FnError>> = Mutex::new(None);
+static DEBUG_CALLBACK: Mutex<Option<FnDebug>> = Mutex::new(None);
 
-extern "C" fn error_callback(
+extern "C" fn debug_callback(
     source: ffi::GLenum,
     typ: ffi::GLenum,
     id: ffi::GLuint,
     severity: ffi::GLenum,
-    length: ffi::GLsizei,
+    _length: ffi::GLsizei,
     message: *const ffi::GLchar,
     _user_param: *const c_void,
 ) {
-    let cb = ERROR_CALLBACK
+    let cb = DEBUG_CALLBACK
         .lock()
         .unwrap()
         .expect("GL error callback is not set");
     let message = unsafe { CStr::from_ptr(message) }
         .to_str()
         .expect("GL error message is not a valid UTF-8 string");
-    cb(source, typ, id, severity, length, message);
+    cb(source.into(), typ.into(), id, severity.into(), message);
 }
 
 /// Specifies a callback to receive debugging messages from the GL.
-pub fn debug_message_callback(callback: FnError) {
-    *ERROR_CALLBACK.lock().unwrap() = Some(callback);
-    unsafe { ffi::glDebugMessageCallback(error_callback as *const c_void, ptr::null()) }
+pub fn debug_message_callback(callback: FnDebug) {
+    *DEBUG_CALLBACK.lock().unwrap() = Some(callback);
+    unsafe { ffi::glDebugMessageCallback(debug_callback as *const c_void, ptr::null()) }
 }
 
 /// Deletes named buffer objects.
