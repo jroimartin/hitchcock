@@ -205,7 +205,7 @@ pub fn debug_message_callback(callback: FnError) {
 }
 
 /// Deletes named buffer objects.
-pub fn delete_buffers(buffers: Vec<Buffer>) {
+pub fn delete_buffers(buffers: &[Buffer]) {
     unsafe { ffi::glDeleteBuffers(buffers.len() as i32, buffers.as_ptr() as *mut u32) }
 }
 
@@ -220,7 +220,7 @@ pub fn delete_shader(shader: Shader) {
 }
 
 /// Deletes vertex array objects.
-pub fn delete_vertex_arrays(arrays: Vec<VertexArray>) {
+pub fn delete_vertex_arrays(arrays: &[VertexArray]) {
     unsafe { ffi::glDeleteVertexArrays(arrays.len() as i32, arrays.as_ptr() as *mut u32) }
 }
 

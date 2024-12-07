@@ -86,8 +86,8 @@ fn main() {
         glfw::poll_events();
     }
 
-    gl::delete_vertex_arrays(vaos);
-    gl::delete_buffers(vbos);
+    gl::delete_vertex_arrays(&vaos);
+    gl::delete_buffers(&vbos);
     gl::delete_program(shader_program);
 
     glfw::terminate()
