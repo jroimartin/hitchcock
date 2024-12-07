@@ -3,9 +3,11 @@
 use std::{
     collections::HashMap,
     ffi::{c_char, c_int, c_void, CStr, CString, NulError},
-    fmt, ptr,
+    ptr,
     sync::{LazyLock, Mutex},
 };
+
+use crate::macros::define_enum;
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -92,104 +94,23 @@ pub struct GlProc(*const c_void);
 unsafe impl Send for GlProc {}
 unsafe impl Sync for GlProc {}
 
-/// Error codes.
-pub enum ErrorCode {
-    /// No error has occurred.
-    NoError,
-
-    /// GLFW has not been initialized.
-    NotInitialized,
-
-    /// No context is current for this thread.
-    NoCurrentContext,
-
-    /// One of the arguments to the function was an invalid enum
-    /// value.
-    InvalidEnum,
-
-    /// One of the arguments to the function was an invalid value.
-    InvalidValue,
-
-    /// A memory allocation failed.
-    OutOfMemory,
-
-    /// GLFW could not find support for the requested API on the
-    /// system.
-    ApiUnavailable,
-
-    /// The requested OpenGL or OpenGL ES version is not available.
-    VersionUnavailable,
-
-    /// A platform-specific error occurred that does not match any of
-    /// the more specific categories.
-    PlatformError,
-
-    /// The requested format is not supported or available.
-    FormatUnavailable,
-
-    /// The specified window does not have an OpenGL or OpenGL ES
-    /// context.
-    NoWindowContext,
-
-    /// The specified cursor shape is not available.
-    CursorUnavailable,
-
-    /// The requested feature is not provided by the platform.
-    FeatureUnavailable,
-
-    /// The requested feature is not implemented for the platform.
-    FeatureUnimplemented,
-
-    /// Platform unavailable or no matching platform was found.
-    PlatformUnavailable,
-
-    /// Uknown error code.
-    Unknown(i32),
-}
-
-impl fmt::Display for ErrorCode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ErrorCode::NoError => write!(f, "no error"),
-            ErrorCode::NotInitialized => write!(f, "not initialized"),
-            ErrorCode::NoCurrentContext => write!(f, "no current context"),
-            ErrorCode::InvalidEnum => write!(f, "invalid enum"),
-            ErrorCode::InvalidValue => write!(f, "invalid value"),
-            ErrorCode::OutOfMemory => write!(f, "out of memory"),
-            ErrorCode::ApiUnavailable => write!(f, "API unavailable"),
-            ErrorCode::VersionUnavailable => write!(f, "version unavailable"),
-            ErrorCode::PlatformError => write!(f, "platform error"),
-            ErrorCode::FormatUnavailable => write!(f, "format unavailable"),
-            ErrorCode::NoWindowContext => write!(f, "no window context"),
-            ErrorCode::CursorUnavailable => write!(f, "cursor unavailable"),
-            ErrorCode::FeatureUnavailable => write!(f, "feature unavailable"),
-            ErrorCode::FeatureUnimplemented => write!(f, "feature unimplemented"),
-            ErrorCode::PlatformUnavailable => write!(f, "platform unavailable"),
-            ErrorCode::Unknown(code) => write!(f, "uknown error code ({code})"),
-        }
-    }
-}
-
-impl From<i32> for ErrorCode {
-    fn from(code: i32) -> ErrorCode {
-        match code {
-            0 => ErrorCode::NoError,
-            0x00010001 => ErrorCode::NotInitialized,
-            0x00010002 => ErrorCode::NoCurrentContext,
-            0x00010003 => ErrorCode::InvalidEnum,
-            0x00010004 => ErrorCode::InvalidValue,
-            0x00010005 => ErrorCode::OutOfMemory,
-            0x00010006 => ErrorCode::ApiUnavailable,
-            0x00010007 => ErrorCode::VersionUnavailable,
-            0x00010008 => ErrorCode::PlatformError,
-            0x00010009 => ErrorCode::FormatUnavailable,
-            0x0001000A => ErrorCode::NoWindowContext,
-            0x0001000B => ErrorCode::CursorUnavailable,
-            0x0001000C => ErrorCode::FeatureUnavailable,
-            0x0001000D => ErrorCode::FeatureUnimplemented,
-            0x0001000E => ErrorCode::PlatformUnavailable,
-            _ => ErrorCode::Unknown(code),
-        }
+define_enum! {
+    ErrorCode(i32, "Error codes") {
+        NoError              => (0, "No error has occurred"),
+        NotInitialized       => (0x00010001, "GLFW has not been initialized"),
+        NoCurrentContext     => (0x00010002, "No context is current for this thread"),
+        InvalidEnum          => (0x00010003, "One of the arguments to the function was an invalid enum value"),
+        InvalidValue         => (0x00010004, "One of the arguments to the function was an invalid value"),
+        OutOfMemory          => (0x00010005, "A memory allocation failed"),
+        ApiUnavailable       => (0x00010006, "GLFW could not find support for the requested API on the system"),
+        VersionUnavailable   => (0x00010007, "The requested OpenGL or OpenGL ES version is not available"),
+        PlatformError        => (0x00010008, "A platform-specific error occurred that does not match any of the more specific categories"),
+        FormatUnavailable    => (0x00010009, "The requested format is not supported or available"),
+        NoWindowContext      => (0x0001000A, "The specified window does not have an OpenGL or OpenGL ES context"),
+        CursorUnavailable    => (0x0001000B, "The specified cursor shape is not available"),
+        FeatureUnavailable   => (0x0001000C, "The requested feature is not provided by the platform"),
+        FeatureUnimplemented => (0x0001000D, "The requested feature is not implemented for the platform"),
+        PlatformUnavailable  => (0x0001000E, "Platform unavailable or no matching platform was found"),
     }
 }
 
@@ -283,7 +204,7 @@ extern "C" fn framebuffer_size_callback(window: *mut c_void, width: c_int, heigh
         .lock()
         .unwrap()
         .get(&window)
-        .expect("unknown GLFW window")
+        .expect("Unknown GLFW window")
         .expect("GLFW framebuffer size callback is not set");
     cb(window, width, height);
 }

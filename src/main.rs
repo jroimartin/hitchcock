@@ -30,7 +30,7 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 "#;
 
 fn main() {
-    glfw::init().unwrap();
+    glfw::init().expect("Failed to initialized GLFW");
 
     glfw::set_error_callback(Some(glfw_error_callback));
 
@@ -38,8 +38,8 @@ fn main() {
     glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 3);
     glfw::window_hint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
 
-    let window =
-        glfw::create_window(INITIAL_WIDTH, INITIAL_HEIGHT, "Hitchcock", None, None).unwrap();
+    let window = glfw::create_window(INITIAL_WIDTH, INITIAL_HEIGHT, "Hitchcock", None, None)
+        .expect("Failed to create window");
     glfw::make_context_current(window);
     glfw::set_framebuffer_size_callback(window, Some(glfw_framebuffer_size_callback));
 
@@ -94,7 +94,7 @@ fn main() {
 }
 
 fn glfw_error_callback(error_code: glfw::ErrorCode, description: &str) {
-    eprintln!("GLFW error: {description} ({error_code})");
+    eprintln!("GLFW error: {error_code}: {description}");
 }
 
 fn glfw_framebuffer_size_callback(_window: glfw::Window, width: i32, height: i32) {
