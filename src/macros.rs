@@ -1,11 +1,11 @@
 //! Common macros.
 
 macro_rules! define_enum {
-    ($enum_name:ident($enum_type:ty, $enum_doc:literal) {
+    ($vis:vis $enum_name:ident($enum_type:ty, $enum_doc:literal) {
         $($variant_name:ident => ($variant_value:literal, $variant_doc:literal)),+ $(,)?
     }) => {
         #[doc = concat!($enum_doc, ".")]
-        pub enum $enum_name {
+        $vis enum $enum_name {
             $(
             #[doc = concat!($variant_doc, ".")]
             $variant_name,

@@ -124,7 +124,7 @@ impl Buffer {
 }
 
 define_enum! {
-    DebugSource(u32, "Debug source") {
+    pub DebugSource(u32, "Debug source") {
         Api            => (0x8246, "API"),
         WindowSystem   => (0x8247, "Window system"),
         ShaderCompiler => (0x8248, "Shader compiler"),
@@ -135,7 +135,7 @@ define_enum! {
 }
 
 define_enum! {
-    DebugType(u32, "Debug type") {
+    pub DebugType(u32, "Debug type") {
         Error              => (0x824c, "Error"),
         DeprecatedBehavior => (0x824d, "Deprecated behavior"),
         UndefinedBehavior  => (0x824e, "Undefined behavior"),
@@ -149,7 +149,7 @@ define_enum! {
 }
 
 define_enum! {
-    DebugSeverity(u32, "Debug severity") {
+    pub DebugSeverity(u32, "Debug severity") {
         High         => (0x9146, "High"),
         Medium       => (0x9147, "Medium"),
         Low          => (0x9148, "Low"),
