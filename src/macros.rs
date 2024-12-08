@@ -1,9 +1,10 @@
 //! Common macros.
 
-macro_rules! define_enum {
-    ($vis:vis $enum_name:ident($enum_type:ty, $enum_doc:literal) {
+macro_rules! define_enums {
+    ($($vis:vis $enum_name:ident($enum_type:ty, $enum_doc:literal) {
         $($variant_name:ident => ($variant_value:literal, $variant_doc:literal)),+ $(,)?
-    }) => {
+    })+) => {
+        $(
         #[doc = concat!($enum_doc, ".")]
         $vis enum $enum_name {
             $(
@@ -46,7 +47,8 @@ macro_rules! define_enum {
                 }
             }
         }
+        )+
     }
 }
 
-pub(crate) use define_enum;
+pub(crate) use define_enums;

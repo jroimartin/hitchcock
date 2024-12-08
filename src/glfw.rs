@@ -7,7 +7,7 @@ use std::{
     sync::{LazyLock, Mutex},
 };
 
-use crate::macros::define_enum;
+use crate::macros::define_enums;
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -94,19 +94,19 @@ pub struct GlProc(*const c_void);
 unsafe impl Send for GlProc {}
 unsafe impl Sync for GlProc {}
 
-define_enum! {
+define_enums! {
     pub ErrorCode(i32, "Error codes") {
-        NoError              => (0, "No error has occurred"),
-        NotInitialized       => (0x00010001, "GLFW has not been initialized"),
-        NoCurrentContext     => (0x00010002, "No context is current for this thread"),
-        InvalidEnum          => (0x00010003, "One of the arguments to the function was an invalid enum value"),
-        InvalidValue         => (0x00010004, "One of the arguments to the function was an invalid value"),
-        OutOfMemory          => (0x00010005, "A memory allocation failed"),
-        ApiUnavailable       => (0x00010006, "GLFW could not find support for the requested API on the system"),
-        VersionUnavailable   => (0x00010007, "The requested OpenGL or OpenGL ES version is not available"),
-        PlatformError        => (0x00010008, "A platform-specific error occurred that does not match any of the more specific categories"),
-        FormatUnavailable    => (0x00010009, "The requested format is not supported or available"),
-        NoWindowContext      => (0x0001000a, "The specified window does not have an OpenGL or OpenGL ES context"),
+        NoError            => (0, "No error has occurred"),
+        NotInitialized     => (0x00010001, "GLFW has not been initialized"),
+        NoCurrentContext   => (0x00010002, "No context is current for this thread"),
+        InvalidEnum        => (0x00010003, "One of the arguments to the function was an invalid enum value"),
+        InvalidValue       => (0x00010004, "One of the arguments to the function was an invalid value"),
+        OutOfMemory        => (0x00010005, "A memory allocation failed"),
+        ApiUnavailable     => (0x00010006, "GLFW could not find support for the requested API on the system"),
+        VersionUnavailable => (0x00010007, "The requested OpenGL or OpenGL ES version is not available"),
+        PlatformError      => (0x00010008, "A platform-specific error occurred that does not match any of the more specific categories"),
+        FormatUnavailable  => (0x00010009, "The requested format is not supported or available"),
+        NoWindowContext    => (0x0001000a, "The specified window does not have an OpenGL or OpenGL ES context"),
     }
 }
 

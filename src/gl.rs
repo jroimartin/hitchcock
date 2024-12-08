@@ -6,7 +6,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::macros::define_enum;
+use crate::macros::define_enums;
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -123,7 +123,7 @@ impl Buffer {
     }
 }
 
-define_enum! {
+define_enums! {
     pub DebugSource(u32, "Debug source") {
         Api            => (0x8246, "API"),
         WindowSystem   => (0x8247, "Window system"),
@@ -132,9 +132,7 @@ define_enum! {
         Application    => (0x824a, "Application"),
         Other          => (0x824b, "Other"),
     }
-}
 
-define_enum! {
     pub DebugType(u32, "Debug type") {
         Error              => (0x824c, "Error"),
         DeprecatedBehavior => (0x824d, "Deprecated behavior"),
@@ -146,9 +144,7 @@ define_enum! {
         PopGroup           => (0x826a, "Pop group"),
         Other              => (0x8251, "Other"),
     }
-}
 
-define_enum! {
     pub DebugSeverity(u32, "Debug severity") {
         High         => (0x9146, "High"),
         Medium       => (0x9147, "Medium"),
