@@ -95,7 +95,7 @@ unsafe impl Send for GlProc {}
 unsafe impl Sync for GlProc {}
 
 define_enums! {
-    pub ErrorCode(i32, "Error codes") {
+    pub enum ErrorCode(i32, "Error codes") {
         NoError            => (0, "No error has occurred"),
         NotInitialized     => (0x00010001, "GLFW has not been initialized"),
         NoCurrentContext   => (0x00010002, "No context is current for this thread"),
