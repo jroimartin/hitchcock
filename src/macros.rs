@@ -21,7 +21,7 @@ macro_rules! define_enums {
                     $(
                     $enum_name::$variant_name => write!(f, $variant_doc),
                     )+
-                    $enum_name::Unknown(v) => write!(f, "Unknown ({v})"),
+                    $enum_name::Unknown(v) => write!(f, "Unknown ({v:#x})"),
                 }
             }
         }
