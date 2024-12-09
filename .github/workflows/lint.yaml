@@ -11,5 +11,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends --assume-yes libglfw3-dev
       - name: Run "cargo pedant"
         run: cargo pedant
