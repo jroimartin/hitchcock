@@ -64,7 +64,7 @@ pub fn begin(name: &str, open: Option<&mut bool>, flags: u32) -> Result<bool> {
         }
         None => unsafe { ffi::igBegin(name.as_ptr(), ptr::null_mut(), flags) },
     };
-    return Ok(unfolded != 0);
+    Ok(unfolded != 0)
 }
 
 /// Adds a checkbox widget. `checked` reports whether the checkbox is
