@@ -1,6 +1,6 @@
 //! Common macros.
 
-macro_rules! define_enums {
+macro_rules! define_enum {
     ($($vis:vis enum $enum_name:ident($enum_type:ty, $enum_doc:literal) {
         $($variant_name:ident => ($variant_value:literal, $variant_doc:literal)),+ $(,)?
     })+) => {
@@ -48,7 +48,55 @@ macro_rules! define_enums {
             }
         }
         )+
-    }
+    };
 }
 
-pub(crate) use define_enums;
+macro_rules! define_opaque {
+    ($vis:vis opaque $name:ident(const)) => {
+        /// Constant opaque type.
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        #[repr(transparent)]
+        $vis struct $name(*const std::ffi::c_void);
+
+        unsafe impl Send for $name {}
+        unsafe impl Sync for $name {}
+
+        impl $name {
+            /// Returns an unsafe pointer to the opaque object.
+            pub fn as_ptr(&self) -> *const c_void {
+                self.0
+            }
+        }
+    };
+    ($vis:vis opaque $name:ident(mut)) => {
+        /// Mutable opaque type.
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+        #[repr(transparent)]
+        $vis struct $name(*mut std::ffi::c_void);
+
+        unsafe impl Send for $name {}
+        unsafe impl Sync for $name {}
+
+        impl $name {
+            /// Returns an unsafe pointer to the opaque object.
+            pub fn as_ptr(&self) -> *const c_void {
+                self.0
+            }
+
+            /// Returns an unsafe mutable pointer to the opaque object.
+            pub fn as_mut_ptr(&self) -> *mut c_void {
+                self.0
+            }
+        }
+    };
+    ($($vis:vis opaque $name:ident($mut:ident);)+) => {
+        $(
+        $crate::macros::define_opaque! {
+            $vis opaque $name($mut)
+        }
+        )+
+    };
+}
+
+pub(crate) use define_enum;
+pub(crate) use define_opaque;

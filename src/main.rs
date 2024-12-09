@@ -2,7 +2,7 @@
 
 use std::mem;
 
-use hitchcock::{gl, glfw};
+use hitchcock::{gl, glfw, imgui};
 
 const INITIAL_WIDTH: i32 = 800;
 const INITIAL_HEIGHT: i32 = 600;
@@ -30,7 +30,7 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 "#;
 
 fn main() {
-    glfw::init().expect("Failed to initialized GLFW");
+    glfw::init().expect("Failed to initialize GLFW");
 
     glfw::set_error_callback(Some(glfw_error_callback));
 
@@ -74,7 +74,60 @@ fn main() {
     gl::bind_buffer(gl::ARRAY_BUFFER, gl::Buffer::zero());
     gl::bind_vertex_array(gl::VertexArray::zero());
 
+    let ig_ctx = imgui::create_context(None);
+    imgui::glfw::init_for_opengl(window, true).expect("Failed to initialize ImGui GLFW backend");
+    imgui::opengl::init("#version 330 core").expect("Failed to initialize ImGui OpenGL backend");
+
+    let mut demo_open = true;
+    let mut window_open = true;
+    let mut checkbox_checked = false;
+    let mut slider_value = 0.0;
+
     while !glfw::window_should_close(window) {
+        glfw::poll_events();
+
+        imgui::opengl::new_frame();
+        imgui::glfw::new_frame();
+        imgui::new_frame();
+
+        if demo_open {
+            imgui::show_demo_window(Some(&mut demo_open));
+        }
+
+        if window_open {
+            if imgui::begin("Dear ImGui window", Some(&mut window_open), 0)
+                .expect("Failed to create window")
+            {
+                imgui::text("Text widget").expect("Failed to create text widget");
+
+                let checkbox_changed = imgui::checkbox("Checkbox widget", &mut checkbox_checked)
+                    .expect("Failed to create checkbox widget");
+                if checkbox_changed {
+                    println!("Checkbox changed!");
+                }
+                if checkbox_checked {
+                    println!("Checkbox checked!");
+                }
+
+                let slider_changed = imgui::slider_float(
+                    "Slider float widget",
+                    &mut slider_value,
+                    0.0,
+                    100.0,
+                    "value = %.3f",
+                    0,
+                )
+                .expect("Failed to create slider widget");
+                if slider_changed {
+                    println!("Slider value changed!");
+                }
+                if slider_value > 10.0 && slider_value < 11.0 {
+                    println!("Slider value between 10.0 and 11.0 ({slider_value})");
+                }
+            }
+            imgui::end();
+        }
+
         gl::clear_color(0.2, 0.3, 0.3, 1.0);
         gl::clear(gl::COLOR_BUFFER_BIT);
 
@@ -82,9 +135,15 @@ fn main() {
         gl::bind_vertex_array(vaos[0]);
         gl::draw_arrays(gl::TRIANGLES, 0, 3);
 
+        imgui::render();
+        imgui::opengl::render_draw_data(imgui::get_draw_data());
+
         glfw::swap_buffers(window);
-        glfw::poll_events();
     }
+
+    imgui::opengl::shutdown();
+    imgui::glfw::shutdown();
+    imgui::destroy_context(Some(ig_ctx));
 
     gl::delete_vertex_arrays(&vaos);
     gl::delete_buffers(&vbos);

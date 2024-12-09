@@ -6,7 +6,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::macros::define_enums;
+use crate::macros::define_enum;
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -91,17 +91,14 @@ pub const TRIANGLES: u32 = 0x0004;
 
 /// Shader object.
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Shader(u32);
 
 /// Program object.
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Program(u32);
 
 /// Vertex array object.
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct VertexArray(u32);
 
 impl VertexArray {
@@ -113,7 +110,6 @@ impl VertexArray {
 
 /// Buffer object.
 #[derive(Clone, Copy)]
-#[repr(transparent)]
 pub struct Buffer(u32);
 
 impl Buffer {
@@ -123,7 +119,7 @@ impl Buffer {
     }
 }
 
-define_enums! {
+define_enum! {
     pub enum DebugSource(u32, "Debug source") {
         Api            => (0x8246, "API"),
         WindowSystem   => (0x8247, "Window system"),

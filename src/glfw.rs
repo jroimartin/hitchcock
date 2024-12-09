@@ -2,12 +2,15 @@
 
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_int, c_void, CStr, CString, NulError},
+    ffi::{c_char, c_int, c_void, CStr, CString},
     ptr,
     sync::{LazyLock, Mutex},
 };
 
-use crate::macros::define_enums;
+use crate::{
+    macros::{define_enum, define_opaque},
+    Error, Result,
+};
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -50,51 +53,13 @@ pub const OPENGL_PROFILE: i32 = 0x00022008;
 /// Request core OpenGL profile.
 pub const OPENGL_CORE_PROFILE: i32 = 0x00032001;
 
-/// A specialized result type for Glfw.
-type Result<T> = std::result::Result<T, Error>;
-
-/// The GLFW error type.
-#[derive(Debug)]
-pub enum Error {
-    /// Error when calling library function.
-    Ffi,
-
-    /// Invalid C string.
-    InvalidCString(NulError),
+define_opaque! {
+    pub opaque Window(mut);
+    pub opaque Monitor(mut);
+    pub opaque GlProc(const);
 }
 
-impl From<NulError> for Error {
-    fn from(err: NulError) -> Error {
-        Error::InvalidCString(err)
-    }
-}
-
-/// Window object pointer.
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-#[repr(transparent)]
-pub struct Window(*mut c_void);
-
-unsafe impl Send for Window {}
-unsafe impl Sync for Window {}
-
-/// Monitor object pointer.
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-pub struct Monitor(*mut c_void);
-
-unsafe impl Send for Monitor {}
-unsafe impl Sync for Monitor {}
-
-/// Generic function pointer used for returning client API function
-/// pointers.
-#[derive(Clone, Copy)]
-#[repr(transparent)]
-pub struct GlProc(*const c_void);
-
-unsafe impl Send for GlProc {}
-unsafe impl Sync for GlProc {}
-
-define_enums! {
+define_enum! {
     pub enum ErrorCode(i32, "Error codes") {
         NoError            => (0, "No error has occurred"),
         NotInitialized     => (0x00010001, "GLFW has not been initialized"),
@@ -132,8 +97,8 @@ pub fn create_window(
     share: Option<Window>,
 ) -> Result<Window> {
     let title = CString::new(title)?;
-    let monitor = monitor.map_or(ptr::null_mut(), |m| m.0);
-    let share = share.map_or(ptr::null_mut(), |w| w.0);
+    let monitor = monitor.map_or(ptr::null_mut(), |m| m.as_mut_ptr());
+    let share = share.map_or(ptr::null_mut(), |w| w.as_mut_ptr());
     let window = unsafe { ffi::glfwCreateWindow(width, height, title.as_ptr(), monitor, share) };
     if window.is_null() {
         return Err(Error::Ffi);
@@ -155,7 +120,7 @@ pub fn get_proc_address(procname: &str) -> Result<GlProc> {
 /// Makes the context of the specified window current for the calling
 /// thread.
 pub fn make_context_current(window: Window) {
-    unsafe { ffi::glfwMakeContextCurrent(window.0) }
+    unsafe { ffi::glfwMakeContextCurrent(window.as_mut_ptr()) }
 }
 
 /// Processes all pending events.
@@ -216,12 +181,12 @@ pub fn set_framebuffer_size_callback(window: Window, callback: Option<FnFramebuf
     } else {
         ptr::null()
     };
-    unsafe { ffi::glfwSetFramebufferSizeCallback(window.0, cb) };
+    unsafe { ffi::glfwSetFramebufferSizeCallback(window.as_mut_ptr(), cb) };
 }
 
 /// Swaps the front and back buffers of the specified window.
 pub fn swap_buffers(window: Window) {
-    unsafe { ffi::glfwSwapBuffers(window.0) }
+    unsafe { ffi::glfwSwapBuffers(window.as_mut_ptr()) }
 }
 
 /// Sets the specified window hint to the desired value.
@@ -231,5 +196,5 @@ pub fn window_hint(hint: i32, value: i32) {
 
 /// Checks the close flag of the specified window.
 pub fn window_should_close(window: Window) -> bool {
-    unsafe { ffi::glfwWindowShouldClose(window.0) != 0 }
+    unsafe { ffi::glfwWindowShouldClose(window.as_mut_ptr()) != 0 }
 }
