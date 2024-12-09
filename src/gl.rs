@@ -19,8 +19,8 @@ mod ffi {
     pub type GLint = c_int;
     pub type GLuint = c_uint;
     pub type GLsizei = c_int;
-    pub type GLclampf = c_float;
     pub type GLsizeiptr = usize;
+    pub type GLfloat = c_float;
 
     macro_rules! glfn {
         ($name:ident, $once:ident, $ret:ty $(, $pname:ident: $ptype:ty)*) => {
@@ -41,11 +41,11 @@ mod ffi {
     glfn![glBindVertexArray, GL_BIND_VERTEX_ARRAY, (), array: GLuint];
     glfn![glBufferData, GL_BUFFER_DATA, (), target: GLenum, size: GLsizeiptr, data: *const c_void, usage: GLenum];
     glfn![glClear, GL_CLEAR, (), mask: GLbitfield];
-    glfn![glClearColor, GL_CLEAR_COLOR, (), red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf];
+    glfn![glClearColor, GL_CLEAR_COLOR, (), red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat];
     glfn![glCompileShader, GL_COMPILE_SHADER, (), shader: GLuint];
     glfn![glCreateProgram, GL_CREATE_PROGRAM, GLuint];
-    glfn![glCreateShader, GL_CREATE_SHADER, GLuint, shaderType: GLenum];
-    glfn![glDebugMessageCallback, GL_DEBUG_MESSAGE_CALLBACK, (), callback: *const c_void, userParam: *const c_void];
+    glfn![glCreateShader, GL_CREATE_SHADER, GLuint, typ: GLenum];
+    glfn![glDebugMessageCallback, GL_DEBUG_MESSAGE_CALLBACK, (), callback: *const c_void, user_param: *const c_void];
     glfn![glDeleteBuffers, GL_DELETE_BUFFERS, (), n: GLsizei, buffers: *const GLuint];
     glfn![glDeleteProgram, GL_DELETE_PROGRAM, (), program: GLuint];
     glfn![glDeleteShader, GL_DELETE_SHADER, (), shader: GLuint];
