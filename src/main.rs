@@ -1,6 +1,6 @@
 //! Hitchcock is a libre demo creation tool.
 
-use std::mem;
+use std::{mem, process};
 
 use hitchcock::{gl, glfw, imgui, Result};
 
@@ -32,7 +32,7 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 fn main() {
     run().unwrap_or_else(|err| {
         println!("Error: {err}");
-        std::process::exit(1);
+        process::exit(1);
     });
 }
 

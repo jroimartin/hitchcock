@@ -51,12 +51,6 @@ pub const OPENGL_PROFILE: i32 = 0x00022008;
 /// Request core OpenGL profile.
 pub const OPENGL_CORE_PROFILE: i32 = 0x00032001;
 
-define_opaque! {
-    pub opaque Window(mut);
-    pub opaque Monitor(mut);
-    pub opaque GlProc(const);
-}
-
 /// A specialized result type.
 pub type Result<T> = result::Result<T, Error>;
 
@@ -94,6 +88,12 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {}
+
+define_opaque! {
+    pub opaque Window(mut);
+    pub opaque Monitor(mut);
+    pub opaque GlProc(const);
+}
 
 define_enum! {
     pub enum ErrorCode(i32, "Error codes") {
