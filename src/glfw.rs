@@ -85,10 +85,10 @@ impl From<NulError> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::GlfwInit => write!(f, "Failed to initialize GLFW"),
-            Error::GlfwCreateWindow => write!(f, "Failed to create GLFW window"),
-            Error::GlfwGetProcAddress => write!(f, "Failed to get function address"),
-            Error::InvalidCString(_) => write!(f, "Invalid C string"),
+            Error::GlfwInit => write!(f, "failed to initialize GLFW"),
+            Error::GlfwCreateWindow => write!(f, "failed to create GLFW window"),
+            Error::GlfwGetProcAddress => write!(f, "failed to get function address"),
+            Error::InvalidCString(e) => write!(f, "invalid C string: {e}"),
         }
     }
 }
@@ -201,7 +201,7 @@ extern "C" fn framebuffer_size_callback(window: *mut c_void, width: c_int, heigh
         .lock()
         .unwrap()
         .get(&window)
-        .expect("Unknown GLFW window")
+        .expect("unknown GLFW window")
         .expect("GLFW framebuffer size callback is not set");
     cb(window, width, height);
 }

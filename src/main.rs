@@ -29,7 +29,14 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     }
 "#;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
+    run().unwrap_or_else(|e| {
+        println!("Error: {e}");
+        std::process::exit(1);
+    });
+}
+
+fn run() -> Result<(), Box<dyn std::error::Error>> {
     glfw::init()?;
 
     glfw::set_error_callback(Some(glfw_error_callback));

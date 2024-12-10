@@ -28,7 +28,7 @@ mod ffi {
             pub unsafe fn $name($($pname: $ptype),*) -> $ret {
                 let f = $once.get_or_init(|| unsafe {
                     std::mem::transmute::<crate::glfw::GlProc, fn($($ptype),*) -> $ret>(
-                        crate::glfw::get_proc_address(stringify!($name)).expect("Failed to get OpenGL proc address"),
+                        crate::glfw::get_proc_address(stringify!($name)).expect("failed to get OpenGL proc address"),
                     )
                 });
                 f($($pname),*)

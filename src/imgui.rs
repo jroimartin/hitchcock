@@ -66,10 +66,10 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::ImGuiImplGlfwInitForOpenGL => {
-                write!(f, "Failed to initialize ImGui GLFW backend")
+                write!(f, "failed to initialize ImGui GLFW backend")
             }
-            Error::ImGuiImplOpenGL3Init => write!(f, "Failed to initialize ImGui OpenGL backend"),
-            Error::InvalidCString(_) => write!(f, "Invalid C string"),
+            Error::ImGuiImplOpenGL3Init => write!(f, "failed to initialize ImGui OpenGL backend"),
+            Error::InvalidCString(e) => write!(f, "invalid C string: {e}"),
         }
     }
 }
