@@ -4,31 +4,6 @@ use std::{mem, process};
 
 use hitchcock::{gl, glfw, imgui, Result};
 
-const INITIAL_WIDTH: i32 = 800;
-const INITIAL_HEIGHT: i32 = 600;
-
-const VERTICES: [f32; 9] = [-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0];
-
-const VERTEX_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-
-    void main()
-    {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }
-"#;
-
-const FRAGMENT_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    out vec4 FragColor;
-
-    void main()
-    {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    }
-"#;
-
 struct App {
     demo_open: bool,
     window_open: bool,
@@ -48,6 +23,31 @@ impl Default for App {
 }
 
 impl App {
+    const INITIAL_WIDTH: i32 = 800;
+    const INITIAL_HEIGHT: i32 = 600;
+
+    const VERTICES: [f32; 9] = [-0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0];
+
+    const VERTEX_SHADER_SOURCE: &str = r#"
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+
+    void main()
+    {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    }
+    "#;
+
+    const FRAGMENT_SHADER_SOURCE: &str = r#"
+    #version 330 core
+    out vec4 FragColor;
+
+    void main()
+    {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    }
+    "#;
+
     fn run(&mut self) -> Result<()> {
         glfw::init()?;
 
@@ -57,7 +57,13 @@ impl App {
         glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 3);
         glfw::window_hint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
 
-        let window = glfw::create_window(INITIAL_WIDTH, INITIAL_HEIGHT, "Hitchcock", None, None)?;
+        let window = glfw::create_window(
+            App::INITIAL_WIDTH,
+            App::INITIAL_HEIGHT,
+            "Hitchcock",
+            None,
+            None,
+        )?;
         glfw::make_context_current(window);
         glfw::set_framebuffer_size_callback(window, Some(App::glfw_framebuffer_size_callback));
 
@@ -65,11 +71,11 @@ impl App {
         gl::debug_message_callback(App::gl_debug_callback);
 
         let vertex_shader = gl::create_shader(gl::VERTEX_SHADER);
-        gl::shader_source(vertex_shader, &[VERTEX_SHADER_SOURCE]);
+        gl::shader_source(vertex_shader, &[App::VERTEX_SHADER_SOURCE]);
         gl::compile_shader(vertex_shader);
 
         let fragment_shader = gl::create_shader(gl::FRAGMENT_SHADER);
-        gl::shader_source(fragment_shader, &[FRAGMENT_SHADER_SOURCE]);
+        gl::shader_source(fragment_shader, &[App::FRAGMENT_SHADER_SOURCE]);
         gl::compile_shader(fragment_shader);
 
         let shader_program = gl::create_program();
@@ -84,7 +90,7 @@ impl App {
 
         let vbos = gl::gen_buffers(1);
         gl::bind_buffer(gl::ARRAY_BUFFER, vbos[0]);
-        gl::buffer_data(gl::ARRAY_BUFFER, &VERTICES, gl::STATIC_DRAW);
+        gl::buffer_data(gl::ARRAY_BUFFER, &App::VERTICES, gl::STATIC_DRAW);
 
         gl::vertex_attrib_pointer(0, 3, gl::FLOAT, false, 3 * mem::size_of::<f32>(), 0);
         gl::enable_vertex_attrib_array(0);
