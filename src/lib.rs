@@ -10,7 +10,7 @@ mod macros;
 /// A specialized result type.
 pub type Result<T> = result::Result<T, Error>;
 
-/// Hitchcock error.
+/// This error types aggregates the rest of errors used by the crate.
 #[derive(Debug)]
 pub enum Error {
     /// GLFW error.
