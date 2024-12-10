@@ -51,6 +51,7 @@ mod ffi {
     glfn![glDeleteShader, GL_DELETE_SHADER, (), shader: GLuint];
     glfn![glDeleteVertexArrays, GL_DELETE_VERTEX_ARRAYS, (), n: GLsizei, arrays: *const GLuint];
     glfn![glDrawArrays, GL_DRAW_ARRAYS, (), mode: GLenum, first: GLint, count: GLsizei];
+    glfn![glDrawElements, GL_DRAW_ELEMENTS, (), mode: GLenum, count: GLsizei, typ: GLenum, indices: *const c_void];
     glfn![glEnable, GL_ENABLE, (), cap: GLenum];
     glfn![glEnableVertexAttribArray, GL_ENABLE_VERTEX_ATTRIB_ARRAY, (), index: GLuint];
     glfn![glGenBuffers, GL_GEN_BUFFERS, (), n: GLsizei, buffers: *mut GLuint];
@@ -69,8 +70,11 @@ pub const COLOR_BUFFER_BIT: u32 = 0x00004000;
 /// If enabled, debug messages are produced by a debug context.
 pub const DEBUG_OUTPUT: u32 = 0x92e0;
 
-/// Vertex attributes.
+/// Vertex data.
 pub const ARRAY_BUFFER: u32 = 0x8892;
+
+/// Indices used for indexed rendering.
+pub const ELEMENT_ARRAY_BUFFER: u32 = 0x8893;
 
 /// The data store contents are modified by the application, and used
 /// as the source for GL drawing and image specification commands. The
@@ -82,6 +86,9 @@ pub const FRAGMENT_SHADER: u32 = 0x8B30;
 
 /// Vertext shader type.
 pub const VERTEX_SHADER: u32 = 0x8B31;
+
+/// Unsigned integer data type.
+pub const UNSIGNED_INT: u32 = 0x1405;
 
 /// Float data type.
 pub const FLOAT: u32 = 0x1406;
@@ -236,7 +243,12 @@ pub fn debug_message_callback(callback: FnDebug) {
 
 /// Deletes named buffer objects.
 pub fn delete_buffers(buffers: &[Buffer]) {
-    unsafe { ffi::glDeleteBuffers(buffers.len() as i32, buffers.as_ptr() as *mut u32) }
+    unsafe {
+        ffi::glDeleteBuffers(
+            buffers.len() as ffi::GLsizei,
+            buffers.as_ptr() as *const ffi::GLuint,
+        )
+    }
 }
 
 /// Deletes a program object.
@@ -251,12 +263,22 @@ pub fn delete_shader(shader: Shader) {
 
 /// Deletes vertex array objects.
 pub fn delete_vertex_arrays(arrays: &[VertexArray]) {
-    unsafe { ffi::glDeleteVertexArrays(arrays.len() as i32, arrays.as_ptr() as *mut u32) }
+    unsafe {
+        ffi::glDeleteVertexArrays(
+            arrays.len() as ffi::GLsizei,
+            arrays.as_ptr() as *const ffi::GLuint,
+        )
+    }
 }
 
 /// Renders primitives from array data.
 pub fn draw_arrays(mode: u32, first: i32, count: i32) {
     unsafe { ffi::glDrawArrays(mode, first, count) }
+}
+
+/// Renders primitives from array data using the provided indices.
+pub fn draw_elements(mode: u32, count: usize, typ: u32, indices: usize) {
+    unsafe { ffi::glDrawElements(mode, count as ffi::GLsizei, typ, indices as *const c_void) }
 }
 
 /// Enables server-side GL capabilities.
@@ -272,14 +294,14 @@ pub fn enable_vertex_attrib_array(index: u32) {
 /// Generates buffer object names.
 pub fn gen_buffers(n: usize) -> Vec<Buffer> {
     let buffers = vec![Buffer::zero(); n];
-    unsafe { ffi::glGenBuffers(n as i32, buffers.as_ptr() as *mut ffi::GLuint) };
+    unsafe { ffi::glGenBuffers(n as ffi::GLsizei, buffers.as_ptr() as *mut ffi::GLuint) };
     buffers
 }
 
 /// Generates vertex array object names.
 pub fn gen_vertex_arrays(n: usize) -> Vec<VertexArray> {
     let arrays = vec![VertexArray::zero(); n];
-    unsafe { ffi::glGenVertexArrays(n as i32, arrays.as_ptr() as *mut ffi::GLuint) };
+    unsafe { ffi::glGenVertexArrays(n as ffi::GLsizei, arrays.as_ptr() as *mut ffi::GLuint) };
     arrays
 }
 
@@ -300,8 +322,15 @@ pub fn shader_source(shader: Shader, sources: &[&str]) {
         .iter()
         .map(|s| s.as_ptr() as *const ffi::GLchar)
         .collect();
-    let lengths: Vec<i32> = sources.iter().map(|s| s.len() as i32).collect();
-    unsafe { ffi::glShaderSource(shader.0, count as i32, strings.as_ptr(), lengths.as_ptr()) }
+    let lengths: Vec<i32> = sources.iter().map(|s| s.len() as ffi::GLint).collect();
+    unsafe {
+        ffi::glShaderSource(
+            shader.0,
+            count as ffi::GLsizei,
+            strings.as_ptr(),
+            lengths.as_ptr(),
+        )
+    }
 }
 
 /// Installs a program object as part of current rendering state.
@@ -322,10 +351,10 @@ pub fn vertex_attrib_pointer(
     unsafe {
         ffi::glVertexAttribPointer(
             index,
-            size as i32,
+            size as ffi::GLint,
             typ,
             normalized,
-            stride as i32,
+            stride as ffi::GLsizei,
             pointer as *const c_void,
         )
     }
