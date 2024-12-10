@@ -29,8 +29,8 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     }
 "#;
 
-fn main() {
-    glfw::init().expect("Failed to initialize GLFW");
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    glfw::init()?;
 
     glfw::set_error_callback(Some(glfw_error_callback));
 
@@ -38,8 +38,7 @@ fn main() {
     glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 3);
     glfw::window_hint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
 
-    let window = glfw::create_window(INITIAL_WIDTH, INITIAL_HEIGHT, "Hitchcock", None, None)
-        .expect("Failed to create window");
+    let window = glfw::create_window(INITIAL_WIDTH, INITIAL_HEIGHT, "Hitchcock", None, None)?;
     glfw::make_context_current(window);
     glfw::set_framebuffer_size_callback(window, Some(glfw_framebuffer_size_callback));
 
@@ -75,8 +74,8 @@ fn main() {
     gl::bind_vertex_array(gl::VertexArray::zero());
 
     let ig_ctx = imgui::create_context(None);
-    imgui::glfw::init_for_opengl(window, true).expect("Failed to initialize ImGui GLFW backend");
-    imgui::opengl::init("#version 330 core").expect("Failed to initialize ImGui OpenGL backend");
+    imgui::glfw::init_for_opengl(window, true)?;
+    imgui::opengl::init("#version 330 core")?;
 
     let mut demo_open = true;
     let mut window_open = true;
@@ -95,13 +94,10 @@ fn main() {
         }
 
         if window_open {
-            if imgui::begin("Dear ImGui window", Some(&mut window_open), 0)
-                .expect("Failed to create window")
-            {
-                imgui::text("Text widget").expect("Failed to create text widget");
+            if imgui::begin("Dear ImGui window", Some(&mut window_open), 0)? {
+                imgui::text("Text widget")?;
 
-                let checkbox_changed = imgui::checkbox("Checkbox widget", &mut checkbox_checked)
-                    .expect("Failed to create checkbox widget");
+                let checkbox_changed = imgui::checkbox("Checkbox widget", &mut checkbox_checked)?;
                 if checkbox_changed {
                     println!("Checkbox changed!");
                 }
@@ -116,8 +112,7 @@ fn main() {
                     100.0,
                     "value = %.3f",
                     0,
-                )
-                .expect("Failed to create slider widget");
+                )?;
                 if slider_changed {
                     println!("Slider value changed!");
                 }
@@ -149,7 +144,9 @@ fn main() {
     gl::delete_buffers(&vbos);
     gl::delete_program(shader_program);
 
-    glfw::terminate()
+    glfw::terminate();
+
+    Ok(())
 }
 
 fn glfw_error_callback(error_code: glfw::ErrorCode, description: &str) {

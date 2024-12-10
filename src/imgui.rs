@@ -1,11 +1,12 @@
 //! Dear ImGui bindings.
 
 use std::{
-    ffi::{c_float, c_uchar, c_void, CString},
-    ptr,
+    error,
+    ffi::{c_float, c_uchar, c_void, CString, NulError},
+    fmt, ptr, result,
 };
 
-use crate::{macros::define_opaque, Result};
+use crate::macros::define_opaque;
 
 mod ffi {
     use std::ffi::{c_char, c_float, c_int, c_uchar, c_void};
@@ -38,6 +39,42 @@ mod ffi {
         pub fn igText(fmt: *const c_char, ...);
     }
 }
+
+/// A specialized result type.
+type Result<T> = result::Result<T, Error>;
+
+/// Dear ImGui error.
+#[derive(Debug)]
+pub enum Error {
+    /// Error when calling `ImGui_ImplGlfw_InitForOpenGL`.
+    ImGuiImplGlfwInitForOpenGL,
+
+    /// Error when calling `ImGui_ImplOpenGL3_Init`.
+    ImGuiImplOpenGL3Init,
+
+    /// Invalid C string.
+    InvalidCString(NulError),
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Error {
+        Error::InvalidCString(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::ImGuiImplGlfwInitForOpenGL => {
+                write!(f, "Failed to initialize ImGui GLFW backend")
+            }
+            Error::ImGuiImplOpenGL3Init => write!(f, "Failed to initialize ImGui OpenGL backend"),
+            Error::InvalidCString(_) => write!(f, "Invalid C string"),
+        }
+    }
+}
+
+impl error::Error for Error {}
 
 define_opaque! {
     pub opaque Context(mut);
@@ -163,7 +200,7 @@ pub fn text(s: &str) -> Result<()> {
 
 /// Dear ImGui GLFW backend.
 pub mod glfw {
-    use crate::{Error, Result};
+    use super::{Error, Result};
 
     mod ffi {
         use std::ffi::{c_int, c_void};
@@ -184,7 +221,7 @@ pub mod glfw {
         let retval =
             unsafe { ffi::ImGui_ImplGlfw_InitForOpenGL(window.as_mut_ptr(), install_callbacks) };
         if retval == 0 {
-            Err(Error::Ffi)
+            Err(Error::ImGuiImplGlfwInitForOpenGL)
         } else {
             Ok(())
         }
@@ -205,9 +242,7 @@ pub mod glfw {
 pub mod opengl {
     use std::ffi::CString;
 
-    use crate::{Error, Result};
-
-    use super::DrawData;
+    use super::{DrawData, Error, Result};
 
     mod ffi {
         use std::ffi::{c_char, c_int, c_void};
@@ -225,7 +260,7 @@ pub mod opengl {
         let glsl_version = CString::new(glsl_version)?;
         let retval = unsafe { ffi::ImGui_ImplOpenGL3_Init(glsl_version.as_ptr()) };
         if retval == 0 {
-            Err(Error::Ffi)
+            Err(Error::ImGuiImplOpenGL3Init)
         } else {
             Ok(())
         }

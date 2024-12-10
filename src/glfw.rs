@@ -2,15 +2,13 @@
 
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_int, c_void, CStr, CString},
-    ptr,
+    error,
+    ffi::{c_char, c_int, c_void, CStr, CString, NulError},
+    fmt, ptr, result,
     sync::{LazyLock, Mutex},
 };
 
-use crate::{
-    macros::{define_enum, define_opaque},
-    Error, Result,
-};
+use crate::macros::{define_enum, define_opaque};
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -59,6 +57,44 @@ define_opaque! {
     pub opaque GlProc(const);
 }
 
+/// A specialized result type.
+type Result<T> = result::Result<T, Error>;
+
+/// GLFW error.
+#[derive(Debug)]
+pub enum Error {
+    /// Error when calling `glfwInit`.
+    GlfwInit,
+
+    /// Error when calling `glfwCreateWindow`.
+    GlfwCreateWindow,
+
+    /// Error when calling `glfwGetProcAddress`.
+    GlfwGetProcAddress,
+
+    /// Invalid C string.
+    InvalidCString(NulError),
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Error {
+        Error::InvalidCString(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::GlfwInit => write!(f, "Failed to initialize GLFW"),
+            Error::GlfwCreateWindow => write!(f, "Failed to create GLFW window"),
+            Error::GlfwGetProcAddress => write!(f, "Failed to get function address"),
+            Error::InvalidCString(_) => write!(f, "Invalid C string"),
+        }
+    }
+}
+
+impl error::Error for Error {}
+
 define_enum! {
     pub enum ErrorCode(i32, "Error codes") {
         NoError            => (0, "No error has occurred"),
@@ -78,7 +114,7 @@ define_enum! {
 /// Initializes the GLFW library.
 pub fn init() -> Result<()> {
     if unsafe { ffi::glfwInit() == 0 } {
-        return Err(Error::Ffi);
+        return Err(Error::GlfwInit);
     }
     Ok(())
 }
@@ -101,7 +137,7 @@ pub fn create_window(
     let share = share.map_or(ptr::null_mut(), |w| w.as_mut_ptr());
     let window = unsafe { ffi::glfwCreateWindow(width, height, title.as_ptr(), monitor, share) };
     if window.is_null() {
-        return Err(Error::Ffi);
+        return Err(Error::GlfwCreateWindow);
     }
     Ok(Window(window))
 }
@@ -112,7 +148,7 @@ pub fn get_proc_address(procname: &str) -> Result<GlProc> {
     let procname = CString::new(procname)?;
     let proc = unsafe { ffi::glfwGetProcAddress(procname.as_ptr()) };
     if proc.is_null() {
-        return Err(Error::Ffi);
+        return Err(Error::GlfwGetProcAddress);
     }
     Ok(GlProc(proc))
 }
