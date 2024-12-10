@@ -86,16 +86,15 @@ impl App {
         gl::delete_shader(fragment_shader);
 
         let vaos = gl::gen_vertex_arrays(1);
-        gl::bind_vertex_array(vaos[0]);
-
         let vbos = gl::gen_buffers(1);
+
+        gl::bind_vertex_array(vaos[0]);
         gl::bind_buffer(gl::ARRAY_BUFFER, vbos[0]);
         gl::buffer_data(gl::ARRAY_BUFFER, &App::VERTICES, gl::STATIC_DRAW);
-
         gl::vertex_attrib_pointer(0, 3, gl::FLOAT, false, 3 * mem::size_of::<f32>(), 0);
         gl::enable_vertex_attrib_array(0);
-
         gl::bind_buffer(gl::ARRAY_BUFFER, gl::Buffer::zero());
+
         gl::bind_vertex_array(gl::VertexArray::zero());
 
         let ig_ctx = imgui::create_context(None);
