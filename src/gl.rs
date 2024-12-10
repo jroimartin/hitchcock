@@ -203,7 +203,8 @@ pub fn create_shader(typ: u32) -> Shader {
     Shader(shader)
 }
 
-type FnDebug =
+/// Debug callback.
+pub type FnDebug =
     fn(source: DebugSource, typ: DebugType, id: u32, severity: DebugSeverity, message: &str);
 
 static DEBUG_CALLBACK: Mutex<Option<FnDebug>> = Mutex::new(None);

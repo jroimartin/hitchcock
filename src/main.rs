@@ -2,7 +2,7 @@
 
 use std::mem;
 
-use hitchcock::{gl, glfw, imgui};
+use hitchcock::{gl, glfw, imgui, Result};
 
 const INITIAL_WIDTH: i32 = 800;
 const INITIAL_HEIGHT: i32 = 600;
@@ -30,13 +30,13 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 "#;
 
 fn main() {
-    run().unwrap_or_else(|e| {
-        println!("Error: {e}");
+    run().unwrap_or_else(|err| {
+        println!("Error: {err}");
         std::process::exit(1);
     });
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
+fn run() -> Result<()> {
     glfw::init()?;
 
     glfw::set_error_callback(Some(glfw_error_callback));

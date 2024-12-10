@@ -58,7 +58,7 @@ define_opaque! {
 }
 
 /// A specialized result type.
-type Result<T> = result::Result<T, Error>;
+pub type Result<T> = result::Result<T, Error>;
 
 /// GLFW error.
 #[derive(Debug)]
@@ -88,7 +88,7 @@ impl fmt::Display for Error {
             Error::GlfwInit => write!(f, "failed to initialize GLFW"),
             Error::GlfwCreateWindow => write!(f, "failed to create GLFW window"),
             Error::GlfwGetProcAddress => write!(f, "failed to get function address"),
-            Error::InvalidCString(e) => write!(f, "invalid C string: {e}"),
+            Error::InvalidCString(err) => write!(f, "invalid C string: {err}"),
         }
     }
 }
@@ -164,7 +164,8 @@ pub fn poll_events() {
     unsafe { ffi::glfwPollEvents() }
 }
 
-type FnError = fn(error_code: ErrorCode, description: &str);
+/// Error callback.
+pub type FnError = fn(error_code: ErrorCode, description: &str);
 
 static ERROR_CALLBACK: Mutex<Option<FnError>> = Mutex::new(None);
 
@@ -190,7 +191,8 @@ pub fn set_error_callback(callback: Option<FnError>) {
     unsafe { ffi::glfwSetErrorCallback(cb) };
 }
 
-type FnFramebufferSize = fn(window: Window, width: i32, height: i32);
+/// Framebuffer size change callback.
+pub type FnFramebufferSize = fn(window: Window, width: i32, height: i32);
 
 static FRAMEBUFFER_SIZE_CALLBACKS: LazyLock<Mutex<HashMap<Window, Option<FnFramebufferSize>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));

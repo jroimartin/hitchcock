@@ -41,7 +41,7 @@ mod ffi {
 }
 
 /// A specialized result type.
-type Result<T> = result::Result<T, Error>;
+pub type Result<T> = result::Result<T, Error>;
 
 /// Dear ImGui error.
 #[derive(Debug)]
@@ -69,7 +69,7 @@ impl fmt::Display for Error {
                 write!(f, "failed to initialize ImGui GLFW backend")
             }
             Error::ImGuiImplOpenGL3Init => write!(f, "failed to initialize ImGui OpenGL backend"),
-            Error::InvalidCString(e) => write!(f, "invalid C string: {e}"),
+            Error::InvalidCString(err) => write!(f, "invalid C string: {err}"),
         }
     }
 }
