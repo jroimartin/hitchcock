@@ -8,7 +8,6 @@ use hitchcock::{
 };
 
 struct App {
-    demo_open: bool,
     window_open: bool,
     checkbox_checked: bool,
     slider_value: f32,
@@ -17,7 +16,6 @@ struct App {
 impl Default for App {
     fn default() -> App {
         App {
-            demo_open: true,
             window_open: true,
             checkbox_checked: false,
             slider_value: 0.0,
@@ -113,6 +111,16 @@ impl App {
         gl::bind_vertex_array(gl::VertexArray::zero());
 
         let ig_ctx = imgui::create_context(None);
+
+        let mut ig_io = imgui::get_io();
+        ig_io.set_config_flags(
+            ig_io.config_flags()
+                | imgui::CONFIG_FLAGS_NAV_ENABLE_KEYBOARD
+                | imgui::CONFIG_FLAGS_DOCKING_ENABLE,
+        );
+        ig_io.set_ini_filename(None)?;
+        ig_io.set_log_filename(None)?;
+
         imgui::glfw::init_for_opengl(window, true)?;
         imgui::opengl::init("#version 330 core")?;
 
@@ -123,13 +131,13 @@ impl App {
             imgui::glfw::new_frame();
             imgui::new_frame();
 
-            if self.demo_open {
-                imgui::show_demo_window(Some(&mut self.demo_open));
-            }
-
             if self.window_open {
-                if imgui::begin("Dear ImGui window", Some(&mut self.window_open), 0)? {
-                    imgui::text("Text widget")?;
+                if imgui::begin("Dear ImGui window", Some(&mut self.window_open), None)? {
+                    imgui::text("One")?;
+                    imgui::same_line(None, None);
+                    imgui::text("Two")?;
+                    imgui::same_line(None, None);
+                    imgui::text("Three")?;
 
                     let checkbox_changed =
                         imgui::checkbox("Checkbox widget", &mut self.checkbox_checked)?;
@@ -145,8 +153,8 @@ impl App {
                         &mut self.slider_value,
                         0.0,
                         100.0,
-                        "value = %.3f",
-                        0,
+                        None,
+                        None,
                     )?;
                     if slider_changed {
                         println!("Slider value changed!");
