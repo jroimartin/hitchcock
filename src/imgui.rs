@@ -2,7 +2,7 @@
 
 use std::{
     error,
-    ffi::{c_float, c_uchar, c_void, CString, NulError},
+    ffi::{c_float, c_uchar, CString, NulError},
     fmt, ptr, result,
 };
 

@@ -63,7 +63,7 @@ macro_rules! define_opaque {
 
         impl $name {
             /// Returns an unsafe pointer to the opaque object.
-            pub fn as_ptr(&self) -> *const c_void {
+            pub fn as_ptr(&self) -> *const std::ffi::c_void {
                 self.0
             }
         }
@@ -79,12 +79,12 @@ macro_rules! define_opaque {
 
         impl $name {
             /// Returns an unsafe pointer to the opaque object.
-            pub fn as_ptr(&self) -> *const c_void {
+            pub fn as_ptr(&self) -> *const std::ffi::c_void {
                 self.0
             }
 
             /// Returns an unsafe mutable pointer to the opaque object.
-            pub fn as_mut_ptr(&self) -> *mut c_void {
+            pub fn as_mut_ptr(&self) -> *mut std::ffi::c_void {
                 self.0
             }
         }
