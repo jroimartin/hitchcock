@@ -1,6 +1,6 @@
 # Hitchcock
 
-Hitchcock is a libre demo creation tool.
+Hitchcock is a libre 3D experimentation tool.
 
 ## Dependencies
 
