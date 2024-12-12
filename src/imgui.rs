@@ -202,6 +202,9 @@ pub const CONFIG_FLAGS_NAV_ENABLE_KEYBOARD: i32 = 1 << 0;
 /// Enable docking mode.
 pub const CONFIG_FLAGS_DOCKING_ENABLE: i32 = 1 << 7;
 
+/// Always autoresize window.
+pub const WINDOW_FLAGS_ALWAYS_AUTORESIZE: i32 = 1 << 6;
+
 /// A specialized result type.
 pub type Result<T> = result::Result<T, Error>;
 

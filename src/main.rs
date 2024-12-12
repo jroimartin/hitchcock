@@ -132,7 +132,11 @@ impl App {
             imgui::new_frame();
 
             if self.window_open {
-                if imgui::begin("Dear ImGui window", Some(&mut self.window_open), None)? {
+                if imgui::begin(
+                    "Dear ImGui window",
+                    Some(&mut self.window_open),
+                    Some(imgui::WINDOW_FLAGS_ALWAYS_AUTORESIZE),
+                )? {
                     imgui::text("One")?;
                     imgui::same_line(None, None);
                     imgui::text("Two")?;
