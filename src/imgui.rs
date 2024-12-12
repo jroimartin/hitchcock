@@ -18,6 +18,7 @@ mod ffi {
     use std::ffi::{c_char, c_double, c_float, c_int, c_schar, c_uchar, c_uint, c_ushort, c_void};
 
     pub type ImGuiBackendFlags = c_int;
+    pub type ImGuiColorEditFlags = c_int;
     pub type ImGuiConfigFlags = c_int;
     pub type ImGuiID = c_uint;
     pub type ImGuiKeyChord = c_int;
@@ -157,8 +158,8 @@ mod ffi {
 
     #[repr(C)]
     pub struct ImVec2 {
-        x: f32,
-        y: f32,
+        pub x: c_float,
+        pub y: c_float,
     }
 
     #[repr(C)]
@@ -175,6 +176,11 @@ mod ffi {
             flags: ImGuiWindowFlags,
         ) -> c_uchar;
         pub fn igCheckbox(label: *const c_char, v: *mut c_uchar) -> c_uchar;
+        pub fn igColorEdit4(
+            label: *const c_char,
+            col: *mut c_float,
+            flags: ImGuiColorEditFlags,
+        ) -> c_uchar;
         pub fn igCreateContext(shared_font_atlas: *mut c_void) -> *mut c_void;
         pub fn igDestroyContext(ctx: *mut c_void);
         pub fn igEnd();
@@ -195,6 +201,9 @@ mod ffi {
         pub fn igText(fmt: *const c_char, ...);
     }
 }
+
+/// Do not show input fields in color picker widget.
+pub const COLOR_EDIT_FLAGS_NO_INPUTS: i32 = 1 << 5;
 
 /// Enable keyboard controls.
 pub const CONFIG_FLAGS_NAV_ENABLE_KEYBOARD: i32 = 1 << 0;
@@ -287,6 +296,21 @@ pub fn checkbox(label: &str, checked: &mut bool) -> Result<bool> {
     let mut ig_checked: c_uchar = if *checked { 1 } else { 0 };
     let changed = unsafe { ffi::igCheckbox(label.as_ptr(), &mut ig_checked as *mut c_uchar) };
     *checked = ig_checked != 0;
+    Ok(changed != 0)
+}
+
+/// Ads a color picker widget. `col` reports the selected color. The
+/// function returns whether the color has changed.
+pub fn color_edit4(label: &str, col: &mut [f32; 4], flags: Option<i32>) -> Result<bool> {
+    let label = CString::new(label)?;
+    let flags = flags.unwrap_or(0);
+    let changed = unsafe {
+        ffi::igColorEdit4(
+            label.as_ptr(),
+            col as *mut f32,
+            flags as ffi::ImGuiColorEditFlags,
+        )
+    };
     Ok(changed != 0)
 }
 

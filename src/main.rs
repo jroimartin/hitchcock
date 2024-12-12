@@ -9,16 +9,14 @@ use hitchcock::{
 
 struct App {
     window_open: bool,
-    checkbox_checked: bool,
-    slider_value: f32,
+    rect_color: [f32; 4],
 }
 
 impl Default for App {
     fn default() -> App {
         App {
             window_open: true,
-            checkbox_checked: false,
-            slider_value: 0.0,
+            rect_color: [1.0, 0.5, 0.2, 1.0],
         }
     }
 }
@@ -52,9 +50,11 @@ impl App {
     #version 330 core
     out vec4 FragColor;
 
+    uniform vec4 rectColor;
+
     void main()
     {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        FragColor = rectColor;
     }
     "#;
 
@@ -133,39 +133,15 @@ impl App {
 
             if self.window_open {
                 if imgui::begin(
-                    "Dear ImGui window",
+                    "Configuration",
                     Some(&mut self.window_open),
                     Some(imgui::WINDOW_FLAGS_ALWAYS_AUTORESIZE),
+                )? && imgui::color_edit4(
+                    "Rectangle color",
+                    &mut self.rect_color,
+                    Some(imgui::COLOR_EDIT_FLAGS_NO_INPUTS),
                 )? {
-                    imgui::text("One")?;
-                    imgui::same_line(None, None);
-                    imgui::text("Two")?;
-                    imgui::same_line(None, None);
-                    imgui::text("Three")?;
-
-                    let checkbox_changed =
-                        imgui::checkbox("Checkbox widget", &mut self.checkbox_checked)?;
-                    if checkbox_changed {
-                        println!("Checkbox changed!");
-                    }
-                    if self.checkbox_checked {
-                        println!("Checkbox checked!");
-                    }
-
-                    let slider_changed = imgui::slider_float(
-                        "Slider float widget",
-                        &mut self.slider_value,
-                        0.0,
-                        100.0,
-                        None,
-                        None,
-                    )?;
-                    if slider_changed {
-                        println!("Slider value changed!");
-                    }
-                    if self.slider_value > 10.0 && self.slider_value < 11.0 {
-                        println!("Slider value between 10.0 and 11.0 ({})", self.slider_value);
-                    }
+                    println!("Rectangle color: {:?}", self.rect_color);
                 }
                 imgui::end();
             }
