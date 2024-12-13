@@ -16,6 +16,9 @@ pub enum Error {
     /// GLFW error.
     Glfw(glfw::Error),
 
+    /// OpenGL error.
+    Gl(gl::Error),
+
     /// Dear ImGui error.
     ImGui(imgui::Error),
 }
@@ -23,6 +26,12 @@ pub enum Error {
 impl From<glfw::Error> for Error {
     fn from(err: glfw::Error) -> Self {
         Error::Glfw(err)
+    }
+}
+
+impl From<gl::Error> for Error {
+    fn from(err: gl::Error) -> Self {
+        Error::Gl(err)
     }
 }
 
@@ -36,6 +45,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Glfw(err) => write!(f, "GLFW error: {err}"),
+            Error::Gl(err) => write!(f, "OpenGL error: {err}"),
             Error::ImGui(err) => write!(f, "Dear ImGui error: {err}"),
         }
     }

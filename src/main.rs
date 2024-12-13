@@ -81,11 +81,11 @@ impl App {
         gl::debug_message_callback(App::gl_debug_callback);
 
         let vertex_shader = gl::create_shader(gl::VERTEX_SHADER);
-        gl::shader_source(vertex_shader, &[App::VERTEX_SHADER_SOURCE]);
+        gl::shader_source(vertex_shader, &[App::VERTEX_SHADER_SOURCE])?;
         gl::compile_shader(vertex_shader);
 
         let fragment_shader = gl::create_shader(gl::FRAGMENT_SHADER);
-        gl::shader_source(fragment_shader, &[App::FRAGMENT_SHADER_SOURCE]);
+        gl::shader_source(fragment_shader, &[App::FRAGMENT_SHADER_SOURCE])?;
         gl::compile_shader(fragment_shader);
 
         let shader_program = gl::create_program();
@@ -136,12 +136,12 @@ impl App {
                     "Configuration",
                     Some(&mut self.window_open),
                     Some(imgui::WINDOW_FLAGS_ALWAYS_AUTORESIZE),
-                )? && imgui::color_edit4(
-                    "Rectangle color",
-                    &mut self.rect_color,
-                    Some(imgui::COLOR_EDIT_FLAGS_NO_INPUTS),
                 )? {
-                    println!("Rectangle color: {:?}", self.rect_color);
+                    imgui::color_edit4(
+                        "Rectangle color",
+                        &mut self.rect_color,
+                        Some(imgui::COLOR_EDIT_FLAGS_NO_INPUTS),
+                    )?;
                 }
                 imgui::end();
             }
@@ -150,6 +150,16 @@ impl App {
             gl::clear(gl::COLOR_BUFFER_BIT);
 
             gl::use_program(shader_program);
+            let uniform_location = gl::get_uniform_location(shader_program, "rectColor")?;
+            gl::uniform(
+                uniform_location,
+                gl::Uniform::Vec4(
+                    self.rect_color[0],
+                    self.rect_color[1],
+                    self.rect_color[2],
+                    self.rect_color[3],
+                ),
+            );
             gl::bind_vertex_array(vaos[0]);
             gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
             gl::bind_vertex_array(VertexArray::zero());

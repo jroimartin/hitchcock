@@ -1,8 +1,9 @@
 //! OpenGL bindings.
 
 use std::{
-    ffi::{c_void, CStr},
-    mem, ptr,
+    error,
+    ffi::{c_void, CStr, CString, NulError},
+    fmt, mem, ptr, result,
     sync::Mutex,
 };
 
@@ -57,8 +58,10 @@ mod ffi {
     glfn![glGenBuffers, GL_GEN_BUFFERS, (), n: GLsizei, buffers: *mut GLuint];
     glfn![glGenVertexArrays, GL_GEN_VERTEX_ARRAYS, (), n: GLsizei, arrays: *mut GLuint];
     glfn![glGetError, GL_GET_ERROR, GLenum];
+    glfn![glGetUniformLocation, GL_GET_UNIFORM_LOCATION, GLint, program: GLuint, name: *const GLchar];
     glfn![glLinkProgram, GL_LINK_PROGRAM, (), program: GLuint];
     glfn![glShaderSource, GL_SHADER_SOURCE, (), shader: GLuint, count: GLsizei, string: *const *const GLchar, length: *const GLint];
+    glfn![glUniform4f, GL_UNIFORM4F, (), location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat];
     glfn![glUseProgram, GL_USE_PROGRAM, (), program: GLuint];
     glfn![glVertexAttribPointer, GL_VERTEX_ATTRIB_POINTER, (), index: GLuint, size: GLint, typ: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *const c_void];
     glfn![glViewport, GL_VIEWPORT, (), x: GLint, y: GLint, width: GLsizei, height: GLsizei];
@@ -96,17 +99,47 @@ pub const FLOAT: u32 = 0x1406;
 /// Triangles primitive.
 pub const TRIANGLES: u32 = 0x0004;
 
+/// A specialized result type.
+pub type Result<T> = result::Result<T, Error>;
+
+/// OpenGL error.
+#[derive(Debug)]
+pub enum Error {
+    /// Non-active uniform variable in program.
+    NonActiveUniform,
+
+    /// Invalid C string.
+    InvalidCString(NulError),
+}
+
+impl From<NulError> for Error {
+    fn from(err: NulError) -> Error {
+        Error::InvalidCString(err)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::NonActiveUniform => write!(f, "non-active uniform variable in program"),
+            Error::InvalidCString(err) => write!(f, "invalid C string: {err}"),
+        }
+    }
+}
+
+impl error::Error for Error {}
+
 /// Shader object.
 #[derive(Clone, Copy)]
-pub struct Shader(u32);
+pub struct Shader(ffi::GLuint);
 
 /// Program object.
 #[derive(Clone, Copy)]
-pub struct Program(u32);
+pub struct Program(ffi::GLuint);
 
 /// Vertex array object.
 #[derive(Clone, Copy)]
-pub struct VertexArray(u32);
+pub struct VertexArray(ffi::GLuint);
 
 impl VertexArray {
     /// Returns the reserved vertex array zero.
@@ -117,7 +150,7 @@ impl VertexArray {
 
 /// Buffer object.
 #[derive(Clone, Copy)]
-pub struct Buffer(u32);
+pub struct Buffer(ffi::GLuint);
 
 impl Buffer {
     /// Returns the reserved buffer object zero.
@@ -125,6 +158,16 @@ impl Buffer {
         Buffer(0)
     }
 }
+
+/// Uniform value.
+pub enum Uniform {
+    /// vec4 uniform.
+    Vec4(ffi::GLfloat, ffi::GLfloat, ffi::GLfloat, ffi::GLfloat),
+}
+
+/// Uniform location.
+#[derive(Clone, Copy)]
+pub struct UniformLocation(ffi::GLint);
 
 define_enum! {
     pub enum DebugSource(u32, "Debug source") {
@@ -310,18 +353,29 @@ pub fn get_error() -> u32 {
     unsafe { ffi::glGetError() }
 }
 
+/// Returns the location of a uniform variable.
+pub fn get_uniform_location(program: Program, name: &str) -> Result<UniformLocation> {
+    let name = CString::new(name)?;
+    let loc = unsafe { ffi::glGetUniformLocation(program.0, name.as_ptr() as *const ffi::GLchar) };
+    if loc == -1 {
+        return Err(Error::NonActiveUniform);
+    }
+    Ok(UniformLocation(loc))
+}
+
 /// Links a program object.
 pub fn link_program(program: Program) {
     unsafe { ffi::glLinkProgram(program.0) }
 }
 
 /// Replaces the source code in a shader object.
-pub fn shader_source(shader: Shader, sources: &[&str]) {
+pub fn shader_source(shader: Shader, sources: &[&str]) -> Result<()> {
     let count = sources.len();
-    let strings: Vec<*const ffi::GLchar> = sources
+    let csources = sources
         .iter()
-        .map(|s| s.as_ptr() as *const ffi::GLchar)
-        .collect();
+        .map(|s| CString::new(*s).map_err(|err| err.into()))
+        .collect::<Result<Vec<CString>>>()?;
+    let strings: Vec<*const ffi::GLchar> = csources.iter().map(|s| s.as_ptr()).collect();
     let lengths: Vec<i32> = sources.iter().map(|s| s.len() as ffi::GLint).collect();
     unsafe {
         ffi::glShaderSource(
@@ -330,6 +384,23 @@ pub fn shader_source(shader: Shader, sources: &[&str]) {
             strings.as_ptr(),
             lengths.as_ptr(),
         )
+    };
+    Ok(())
+}
+
+/// Specify the value of a uniform variable for the current program
+/// object.
+pub fn uniform(location: UniformLocation, uniform: Uniform) {
+    match uniform {
+        Uniform::Vec4(v0, v1, v2, v3) => unsafe {
+            ffi::glUniform4f(
+                location.0,
+                v0 as ffi::GLfloat,
+                v1 as ffi::GLfloat,
+                v2 as ffi::GLfloat,
+                v3 as ffi::GLfloat,
+            )
+        },
     }
 }
 
