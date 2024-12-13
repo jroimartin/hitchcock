@@ -315,15 +315,15 @@ pub fn begin(name: &str, open: Option<&mut bool>, flags: Option<i32>) -> Result<
 
     let unfolded = match open {
         Some(open) => {
-            let mut ig_open: c_uchar = if *open { 1 } else { 0 };
+            let mut copen: c_uchar = if *open { 1 } else { 0 };
             let unfolded = unsafe {
                 ffi::igBegin(
                     name.as_ptr(),
-                    &mut ig_open as *mut c_uchar,
+                    &mut copen as *mut c_uchar,
                     flags as ffi::ImGuiWindowFlags,
                 )
             };
-            *open = ig_open != 0;
+            *open = copen != 0;
             unfolded
         }
         None => unsafe {
@@ -341,9 +341,9 @@ pub fn begin(name: &str, open: Option<&mut bool>, flags: Option<i32>) -> Result<
 /// checked. The function returns whether the checkbox has changed.
 pub fn checkbox(label: &str, checked: &mut bool) -> Result<bool> {
     let label = CString::new(label)?;
-    let mut ig_checked: c_uchar = if *checked { 1 } else { 0 };
-    let changed = unsafe { ffi::igCheckbox(label.as_ptr(), &mut ig_checked as *mut c_uchar) };
-    *checked = ig_checked != 0;
+    let mut cchecked: c_uchar = if *checked { 1 } else { 0 };
+    let changed = unsafe { ffi::igCheckbox(label.as_ptr(), &mut cchecked as *mut c_uchar) };
+    *checked = cchecked != 0;
     Ok(changed != 0)
 }
 
@@ -351,16 +351,16 @@ pub fn checkbox(label: &str, checked: &mut bool) -> Result<bool> {
 /// function returns whether the color has changed.
 pub fn color_edit4(label: &str, col: &mut Vec4<f32>, flags: Option<i32>) -> Result<bool> {
     let label = CString::new(label)?;
-    let mut ig_col: [f32; 4] = (*col).into();
+    let mut ccol: [f32; 4] = (*col).into();
     let flags = flags.unwrap_or(0);
     let changed = unsafe {
         ffi::igColorEdit4(
             label.as_ptr(),
-            ig_col.as_mut_ptr() as *mut c_float,
+            ccol.as_mut_ptr() as *mut c_float,
             flags as ffi::ImGuiColorEditFlags,
         )
     };
-    *col = ig_col.into();
+    *col = ccol.into();
     Ok(changed != 0)
 }
 
@@ -427,9 +427,9 @@ pub fn set_next_window_size(size: Vec2<f32>, cond: Option<i32>) {
 pub fn show_demo_window(open: Option<&mut bool>) {
     match open {
         Some(open) => {
-            let mut ig_open: c_uchar = if *open { 1 } else { 0 };
-            unsafe { ffi::igShowDemoWindow(&mut ig_open as *mut c_uchar) };
-            *open = ig_open != 0;
+            let mut copen: c_uchar = if *open { 1 } else { 0 };
+            unsafe { ffi::igShowDemoWindow(&mut copen as *mut c_uchar) };
+            *open = copen != 0;
         }
         None => unsafe { ffi::igShowDemoWindow(ptr::null_mut()) },
     }

@@ -106,7 +106,7 @@ pub type Result<T> = result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     /// Non-active uniform variable in program.
-    NonActiveUniform,
+    NonActiveUniform(String),
 
     /// Invalid C string.
     InvalidCString(NulError),
@@ -121,7 +121,7 @@ impl From<NulError> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::NonActiveUniform => write!(f, "non-active uniform variable in program"),
+            Error::NonActiveUniform(s) => write!(f, "non-active uniform variable in program: {s}"),
             Error::InvalidCString(err) => write!(f, "invalid C string: {err}"),
         }
     }
@@ -361,10 +361,10 @@ pub fn get_error() -> u32 {
 
 /// Returns the location of a uniform variable.
 pub fn get_uniform_location(program: Program, name: &str) -> Result<UniformLocation> {
-    let name = CString::new(name)?;
-    let loc = unsafe { ffi::glGetUniformLocation(program.0, name.as_ptr() as *const ffi::GLchar) };
+    let cname = CString::new(name)?;
+    let loc = unsafe { ffi::glGetUniformLocation(program.0, cname.as_ptr() as *const ffi::GLchar) };
     if loc == -1 {
-        return Err(Error::NonActiveUniform);
+        return Err(Error::NonActiveUniform(name.into()));
     }
     Ok(UniformLocation(loc))
 }

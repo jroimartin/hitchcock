@@ -129,6 +129,8 @@ impl App {
         imgui::glfw::init_for_opengl(window, true)?;
         imgui::opengl::init("#version 330 core")?;
 
+        let uniform_location = gl::get_uniform_location(shader_program, "rectColor")?;
+
         while !glfw::window_should_close(window) {
             glfw::poll_events();
 
@@ -165,7 +167,6 @@ impl App {
             gl::clear(gl::COLOR_BUFFER_BIT);
 
             gl::use_program(shader_program);
-            let uniform_location = gl::get_uniform_location(shader_program, "rectColor")?;
             gl::uniform(uniform_location, self.rect_color.into());
             gl::bind_vertex_array(vaos[0]);
             gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
