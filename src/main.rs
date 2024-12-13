@@ -4,19 +4,24 @@ use std::{mem, process};
 
 use hitchcock::{
     gl::{self, VertexArray},
-    glfw, imgui, Result,
+    glfw, imgui, Result, Vec2, Vec4,
 };
 
 struct App {
     window_open: bool,
-    rect_color: [f32; 4],
+    rect_color: Vec4<f32>,
 }
 
 impl Default for App {
     fn default() -> App {
         App {
             window_open: true,
-            rect_color: [1.0, 0.5, 0.2, 1.0],
+            rect_color: Vec4 {
+                x: 1.0,
+                y: 0.5,
+                z: 0.2,
+                w: 1.0,
+            },
         }
     }
 }
@@ -132,6 +137,16 @@ impl App {
             imgui::new_frame();
 
             if self.window_open {
+                let main_viewport = imgui::get_main_viewport();
+                let workpos = main_viewport.get_workpos();
+                imgui::set_next_window_pos(
+                    Vec2 {
+                        x: workpos.x + 10.0,
+                        y: workpos.y + 10.0,
+                    },
+                    None,
+                    None,
+                );
                 if imgui::begin(
                     "Configuration",
                     Some(&mut self.window_open),
@@ -151,15 +166,7 @@ impl App {
 
             gl::use_program(shader_program);
             let uniform_location = gl::get_uniform_location(shader_program, "rectColor")?;
-            gl::uniform(
-                uniform_location,
-                gl::Uniform::Vec4(
-                    self.rect_color[0],
-                    self.rect_color[1],
-                    self.rect_color[2],
-                    self.rect_color[3],
-                ),
-            );
+            gl::uniform(uniform_location, self.rect_color.into());
             gl::bind_vertex_array(vaos[0]);
             gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
             gl::bind_vertex_array(VertexArray::zero());

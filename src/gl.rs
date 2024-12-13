@@ -7,7 +7,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::macros::define_enum;
+use crate::{macros::define_enum, Vec4};
 
 #[allow(non_snake_case)]
 mod ffi {
@@ -163,6 +163,12 @@ impl Buffer {
 pub enum Uniform {
     /// vec4 uniform.
     Vec4(ffi::GLfloat, ffi::GLfloat, ffi::GLfloat, ffi::GLfloat),
+}
+
+impl From<Vec4<f32>> for Uniform {
+    fn from(v: Vec4<f32>) -> Uniform {
+        Uniform::Vec4(v.x, v.y, v.z, v.w)
+    }
 }
 
 /// Uniform location.

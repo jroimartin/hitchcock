@@ -6,7 +6,7 @@ use std::{
     fmt, ptr, result,
 };
 
-use crate::macros::define_opaque;
+use crate::{macros::define_opaque, Vec2, Vec4};
 
 #[allow(
     non_upper_case_globals,
@@ -17,13 +17,17 @@ use crate::macros::define_opaque;
 mod ffi {
     use std::ffi::{c_char, c_double, c_float, c_int, c_schar, c_uchar, c_uint, c_ushort, c_void};
 
+    use crate::Vec2;
+
     pub type ImGuiBackendFlags = c_int;
+    pub type ImGuiCond = c_int;
     pub type ImGuiColorEditFlags = c_int;
     pub type ImGuiConfigFlags = c_int;
     pub type ImGuiID = c_uint;
     pub type ImGuiKeyChord = c_int;
     pub type ImGuiMouseSource = c_int;
     pub type ImGuiSliderFlags = c_int;
+    pub type ImGuiViewportFlags = c_int;
     pub type ImGuiWindowFlags = c_int;
     pub type ImS8 = c_schar;
     pub type ImU16 = c_ushort;
@@ -46,9 +50,11 @@ mod ffi {
         pub IniFilename: *const c_char,
         pub LogFilename: *const c_char,
         pub UserData: *mut c_void,
+        // TODO: replace with `*mut ImFontAtlas`.
         pub Fonts: *mut c_void,
         pub FontGlobalScale: c_float,
         pub FontAllowUserScaling: c_uchar,
+        // TODO: replace with `*mut ImFont`.
         pub FontDefault: *mut c_void,
         pub DisplayFramebufferScale: ImVec2,
         pub ConfigNavSwapGamepadButtons: c_uchar,
@@ -109,6 +115,7 @@ mod ffi {
         pub MetricsRenderWindows: c_int,
         pub MetricsActiveWindows: c_int,
         pub MouseDelta: ImVec2,
+        // TODO: replace with `*mut ImGuiContext`.
         pub Ctx: *mut c_void,
         pub MousePos: ImVec2,
         pub MouseDown: [c_uchar; 5],
@@ -150,23 +157,61 @@ mod ffi {
 
     #[repr(C)]
     pub struct ImGuiKeyData {
-        Down: c_uchar,
-        DownDuration: c_float,
-        DownDurationPrev: c_float,
-        AnalogValue: c_float,
+        pub Down: c_uchar,
+        pub DownDuration: c_float,
+        pub DownDurationPrev: c_float,
+        pub AnalogValue: c_float,
     }
 
+    #[repr(C)]
+    pub struct ImGuiViewport {
+        pub ID: ImGuiID,
+        pub Flags: ImGuiViewportFlags,
+        pub Pos: ImVec2,
+        pub Size: ImVec2,
+        pub WorkPos: ImVec2,
+        pub WorkSize: ImVec2,
+        pub DpiScale: c_float,
+        pub ParentViewportId: ImGuiID,
+        // TODO: replace with `*mut ImDrawData`.
+        pub DrawData: *mut c_void,
+        pub RendererUserData: *mut c_void,
+        pub PlatformUserData: *mut c_void,
+        pub PlatformHandle: *mut c_void,
+        pub PlatformHandleRaw: *mut c_void,
+        pub PlatformWindowCreated: c_uchar,
+        pub PlatformRequestMove: c_uchar,
+        pub PlatformRequestResize: c_uchar,
+        pub PlatformRequestClose: c_uchar,
+    }
+
+    #[derive(Clone, Copy)]
     #[repr(C)]
     pub struct ImVec2 {
         pub x: c_float,
         pub y: c_float,
     }
 
+    impl From<Vec2<f32>> for ImVec2 {
+        fn from(v: Vec2<f32>) -> ImVec2 {
+            ImVec2 {
+                x: v.x as c_float,
+                y: v.y as c_float,
+            }
+        }
+    }
+
+    impl From<ImVec2> for Vec2<f32> {
+        fn from(v: ImVec2) -> Vec2<f32> {
+            Vec2 { x: v.x, y: v.y }
+        }
+    }
+
     #[repr(C)]
     pub struct ImVector_ImWchar {
-        Size: c_int,
-        Capacity: c_int,
-        Data: *mut ImWchar,
+        pub Size: c_int,
+        pub Capacity: c_int,
+        pub Data: *mut ImWchar,
     }
 
     extern "C" {
@@ -186,9 +231,12 @@ mod ffi {
         pub fn igEnd();
         pub fn igGetDrawData() -> *mut c_void;
         pub fn igGetIO() -> *mut ImGuiIO;
+        pub fn igGetMainViewport() -> *mut ImGuiViewport;
         pub fn igNewFrame();
         pub fn igRender();
         pub fn igSameLine(offset_from_start_x: c_float, spacing: c_float);
+        pub fn igSetNextWindowPos(pos: ImVec2, cond: ImGuiCond, pivot: ImVec2);
+        pub fn igSetNextWindowSize(size: ImVec2, cond: ImGuiCond);
         pub fn igShowDemoWindow(p_open: *mut c_uchar);
         pub fn igSliderFloat(
             label: *const c_char,
@@ -301,16 +349,18 @@ pub fn checkbox(label: &str, checked: &mut bool) -> Result<bool> {
 
 /// Ads a color picker widget. `col` reports the selected color. The
 /// function returns whether the color has changed.
-pub fn color_edit4(label: &str, col: &mut [f32; 4], flags: Option<i32>) -> Result<bool> {
+pub fn color_edit4(label: &str, col: &mut Vec4<f32>, flags: Option<i32>) -> Result<bool> {
     let label = CString::new(label)?;
+    let mut ig_col: [f32; 4] = (*col).into();
     let flags = flags.unwrap_or(0);
     let changed = unsafe {
         ffi::igColorEdit4(
             label.as_ptr(),
-            col as *mut f32,
+            ig_col.as_mut_ptr() as *mut c_float,
             flags as ffi::ImGuiColorEditFlags,
         )
     };
+    *col = ig_col.into();
     Ok(changed != 0)
 }
 
@@ -339,52 +389,6 @@ pub fn get_draw_data() -> DrawData {
     DrawData(draw_data)
 }
 
-/// IO state.
-pub struct IO(*mut ffi::ImGuiIO);
-
-impl IO {
-    /// Sets the configuration flags.
-    pub fn set_config_flags(&mut self, flags: i32) {
-        unsafe { (*self.0).ConfigFlags = flags as ffi::ImGuiConfigFlags };
-    }
-
-    /// Returns the configuration flags.
-    pub fn config_flags(&self) -> i32 {
-        unsafe { (*self.0).ConfigFlags }
-    }
-
-    /// Sets the path of the .ini file. If [`Option:None`] is
-    /// provided, it disables automatic load/save. Note that this
-    /// function creates a `CString` from `filename` internally that
-    /// is leaked.
-    pub fn set_ini_filename(&mut self, filename: Option<&str>) -> Result<()> {
-        let filename = match filename {
-            Some(s) => Box::leak(Box::new(CString::new(s)?)).as_ptr(),
-            None => ptr::null(),
-        };
-        unsafe { (*self.0).IniFilename = filename };
-        Ok(())
-    }
-
-    /// Sets the path of the .log file. If [`Option:None`] is
-    /// provided, it disables logging. Note that this function creates
-    /// a `CString` from `filename` internally that is leaked.
-    pub fn set_log_filename(&mut self, filename: Option<&str>) -> Result<()> {
-        let filename = match filename {
-            Some(s) => Box::leak(Box::new(CString::new(s)?)).as_ptr(),
-            None => ptr::null(),
-        };
-        unsafe { (*self.0).LogFilename = filename };
-        Ok(())
-    }
-}
-
-/// Returns the IO state.
-pub fn get_io() -> IO {
-    let io = unsafe { ffi::igGetIO() };
-    IO(io)
-}
-
 /// Starts a new frame.
 pub fn new_frame() {
     unsafe { ffi::igNewFrame() }
@@ -401,6 +405,19 @@ pub fn same_line(offset_from_start_x: Option<f32>, spacing: Option<f32>) {
     let offset_from_start_x = offset_from_start_x.unwrap_or(0.0);
     let spacing = spacing.unwrap_or(-1.0);
     unsafe { ffi::igSameLine(offset_from_start_x, spacing) }
+}
+
+/// Sets next window position.
+pub fn set_next_window_pos(pos: Vec2<f32>, cond: Option<i32>, pivot: Option<Vec2<f32>>) {
+    let cond = cond.unwrap_or(0);
+    let pivot = pivot.unwrap_or(Vec2 { x: 0.0, y: 0.0 });
+    unsafe { ffi::igSetNextWindowPos(pos.into(), cond as ffi::ImGuiCond, pivot.into()) }
+}
+
+/// Sets next window size.
+pub fn set_next_window_size(size: Vec2<f32>, cond: Option<i32>) {
+    let cond = cond.unwrap_or(0);
+    unsafe { ffi::igSetNextWindowSize(size.into(), cond as ffi::ImGuiCond) }
 }
 
 /// Shows the Deam ImGui demo window. If `open` is [`Option::Some`],
@@ -450,6 +467,78 @@ pub fn text(s: &str) -> Result<()> {
     let s = CString::new(s)?;
     unsafe { ffi::igText(s.as_ptr()) };
     Ok(())
+}
+
+/// IO state.
+pub struct IO(*mut ffi::ImGuiIO);
+
+impl IO {
+    /// Sets the configuration flags.
+    pub fn set_config_flags(&mut self, flags: i32) {
+        unsafe { (*self.0).ConfigFlags = flags as ffi::ImGuiConfigFlags };
+    }
+
+    /// Returns the configuration flags.
+    pub fn config_flags(&self) -> i32 {
+        unsafe { (*self.0).ConfigFlags }
+    }
+
+    /// Sets the path of the .ini file. If [`Option:None`] is
+    /// provided, it disables automatic load/save. Note that this
+    /// function creates a `CString` from `filename` internally that
+    /// is leaked.
+    pub fn set_ini_filename(&mut self, filename: Option<&str>) -> Result<()> {
+        let filename = match filename {
+            Some(s) => Box::leak(Box::new(CString::new(s)?)).as_ptr(),
+            None => ptr::null(),
+        };
+        unsafe { (*self.0).IniFilename = filename };
+        Ok(())
+    }
+
+    /// Sets the path of the .log file. If [`Option:None`] is
+    /// provided, it disables logging. Note that this function creates
+    /// a `CString` from `filename` internally that is leaked.
+    pub fn set_log_filename(&mut self, filename: Option<&str>) -> Result<()> {
+        let filename = match filename {
+            Some(s) => Box::leak(Box::new(CString::new(s)?)).as_ptr(),
+            None => ptr::null(),
+        };
+        unsafe { (*self.0).LogFilename = filename };
+        Ok(())
+    }
+}
+
+/// Returns the IO state.
+pub fn get_io() -> IO {
+    let io = unsafe { ffi::igGetIO() };
+    IO(io)
+}
+
+/// Represents the platform Window created by the application which is
+/// hosting the Dear ImGui windows.
+pub struct Viewport(*mut ffi::ImGuiViewport);
+
+impl Viewport {
+    /// Returns the position of the viewport minus task bars, menus
+    /// bars and status bars.
+    pub fn get_workpos(&self) -> Vec2<f32> {
+        let workpos = unsafe { &(*self.0).WorkPos };
+        (*workpos).into()
+    }
+
+    /// Returns the size of the viewport minus task bars, menus bars
+    /// and status bars.
+    pub fn get_worksize(&self) -> Vec2<f32> {
+        let workpos = unsafe { &(*self.0).WorkSize };
+        (*workpos).into()
+    }
+}
+
+/// Returns the primary/default viewport.
+pub fn get_main_viewport() -> Viewport {
+    let viewport = unsafe { ffi::igGetMainViewport() };
+    Viewport(viewport)
 }
 
 /// Dear ImGui GLFW backend.

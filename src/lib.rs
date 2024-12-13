@@ -24,19 +24,19 @@ pub enum Error {
 }
 
 impl From<glfw::Error> for Error {
-    fn from(err: glfw::Error) -> Self {
+    fn from(err: glfw::Error) -> Error {
         Error::Glfw(err)
     }
 }
 
 impl From<gl::Error> for Error {
-    fn from(err: gl::Error) -> Self {
+    fn from(err: gl::Error) -> Error {
         Error::Gl(err)
     }
 }
 
 impl From<imgui::Error> for Error {
-    fn from(err: imgui::Error) -> Self {
+    fn from(err: imgui::Error) -> Error {
         Error::ImGui(err)
     }
 }
@@ -52,3 +52,87 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {}
+
+/// 2-dimensional vector.
+#[derive(Copy, Clone)]
+pub struct Vec2<T> {
+    /// X dimension.
+    pub x: T,
+
+    /// Y dimension.
+    pub y: T,
+}
+
+impl<T> From<Vec2<T>> for [T; 2] {
+    fn from(v: Vec2<T>) -> [T; 2] {
+        [v.x, v.y]
+    }
+}
+
+impl<T: Copy> From<[T; 2]> for Vec2<T> {
+    fn from(v: [T; 2]) -> Vec2<T> {
+        Vec2 { x: v[0], y: v[1] }
+    }
+}
+
+/// 3-dimensional vector.
+#[derive(Copy, Clone)]
+pub struct Vec3<T> {
+    /// X dimension.
+    pub x: T,
+
+    /// Y dimension.
+    pub y: T,
+
+    /// Z dimension.
+    pub z: T,
+}
+
+impl<T> From<Vec3<T>> for [T; 3] {
+    fn from(v: Vec3<T>) -> [T; 3] {
+        [v.x, v.y, v.z]
+    }
+}
+
+impl<T: Copy> From<[T; 3]> for Vec3<T> {
+    fn from(v: [T; 3]) -> Vec3<T> {
+        Vec3 {
+            x: v[0],
+            y: v[1],
+            z: v[2],
+        }
+    }
+}
+
+/// 4-dimensional vector.
+#[derive(Copy, Clone)]
+pub struct Vec4<T> {
+    /// X dimension.
+    pub x: T,
+
+    /// Y dimension.
+    pub y: T,
+
+    /// Z dimension.
+    pub z: T,
+
+    /// W dimension.
+    pub w: T,
+}
+
+impl<T> From<Vec4<T>> for [T; 4] {
+    fn from(v: Vec4<T>) -> [T; 4] {
+        [v.x, v.y, v.z, v.w]
+    }
+}
+
+impl<T: Copy> From<[T; 4]> for Vec4<T> {
+    fn from(v: [T; 4]) -> Vec4<T> {
+        Vec4 {
+            x: v[0],
+            y: v[1],
+            z: v[2],
+            w: v[3],
+        }
+    }
+}
