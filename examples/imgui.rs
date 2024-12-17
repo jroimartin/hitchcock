@@ -1,4 +1,4 @@
-//! Hitchcock is a libre demo creation tool.
+//! Simple Dear ImGui example.
 
 use std::{mem, process};
 
@@ -75,7 +75,7 @@ impl App {
         let window = glfw::create_window(
             App::INITIAL_WIDTH,
             App::INITIAL_HEIGHT,
-            "Hitchcock",
+            "Simple Dear ImGui example",
             None,
             None,
         )?;
@@ -112,7 +112,6 @@ impl App {
         gl::vertex_attrib_pointer(0, 3, gl::FLOAT, false, 3 * mem::size_of::<f32>(), 0);
         gl::enable_vertex_attrib_array(0);
         gl::bind_buffer(gl::ARRAY_BUFFER, gl::Buffer::zero());
-
         gl::bind_vertex_array(gl::VertexArray::zero());
 
         let ig_ctx = imgui::create_context(None);
