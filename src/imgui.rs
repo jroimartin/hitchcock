@@ -483,7 +483,7 @@ impl IO {
         unsafe { (*self.0).ConfigFlags }
     }
 
-    /// Sets the path of the .ini file. If [`Option:None`] is
+    /// Sets the path of the .ini file. If [`Option::None`] is
     /// provided, it disables automatic load/save. Note that this
     /// function creates a `CString` from `filename` internally that
     /// is leaked.
@@ -496,7 +496,7 @@ impl IO {
         Ok(())
     }
 
-    /// Sets the path of the .log file. If [`Option:None`] is
+    /// Sets the path of the .log file. If [`Option::None`] is
     /// provided, it disables logging. Note that this function creates
     /// a `CString` from `filename` internally that is leaked.
     pub fn set_log_filename(&mut self, filename: Option<&str>) -> Result<()> {
