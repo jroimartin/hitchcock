@@ -1,6 +1,6 @@
 //! [Hello Triangle] lesson of LearnOpenGL.
 //!
-//! [LearnOpenGL]: https://learnopengl.com/Getting-started/Hello-Triangle
+//! [Hello Triangle]: https://learnopengl.com/Getting-started/Hello-Triangle
 
 use std::{mem, process};
 

@@ -1,7 +1,7 @@
 //! [Hello Triangle] lesson of LearnOpenGL. This example introduces
 //! the use of element buffer objects.
 //!
-//! [LearnOpenGL]: https://learnopengl.com/Getting-started/Hello-Triangle
+//! [Hello Triangle]: https://learnopengl.com/Getting-started/Hello-Triangle
 
 use std::{mem, process};
 
