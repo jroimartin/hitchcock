@@ -7,6 +7,14 @@ use hitchcock::{
     glfw, imgui, Result, Vec2, Vec4,
 };
 
+fn main() {
+    let mut app = App::default();
+    app.run().unwrap_or_else(|err| {
+        println!("Error: {err}");
+        process::exit(1);
+    });
+}
+
 struct App {
     window_open: bool,
     rect_color: Vec4<f32>,
@@ -208,12 +216,4 @@ impl App {
     ) {
         eprintln!("GL debug: {typ} ({severity}): {source}: {message} ({id})");
     }
-}
-
-fn main() {
-    let mut app = App::default();
-    app.run().unwrap_or_else(|err| {
-        println!("Error: {err}");
-        process::exit(1);
-    });
 }
