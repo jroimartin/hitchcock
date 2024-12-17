@@ -12,7 +12,7 @@ use crate::macros::{define_enum, define_opaque};
 
 #[allow(non_snake_case)]
 mod ffi {
-    use std::ffi::{c_char, c_int, c_void};
+    use std::ffi::{c_char, c_double, c_int, c_void};
 
     #[link(name = "glfw")]
     extern "C" {
@@ -24,6 +24,7 @@ mod ffi {
             share: *mut c_void,
         ) -> *mut c_void;
         pub fn glfwGetProcAddress(procname: *const c_char) -> *const c_void;
+        pub fn glfwGetTime() -> c_double;
         pub fn glfwInit() -> c_int;
         pub fn glfwMakeContextCurrent(window: *mut c_void);
         pub fn glfwPollEvents();
@@ -151,6 +152,12 @@ pub fn get_proc_address(procname: &str) -> Result<GlProc> {
         return Err(Error::GlfwGetProcAddress);
     }
     Ok(GlProc(proc))
+}
+
+/// Returns the value of the GLFW timer. Unless the timer has been
+/// set, the timer measures time elapsed since GLFW was initialized.
+pub fn get_time() -> f64 {
+    unsafe { ffi::glfwGetTime() }
 }
 
 /// Makes the context of the specified window current for the calling
