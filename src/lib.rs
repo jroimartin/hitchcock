@@ -6,6 +6,7 @@ pub mod gl;
 pub mod glfw;
 pub mod imgui;
 mod macros;
+pub mod stb_image;
 
 /// A specialized result type.
 pub type Result<T> = result::Result<T, Error>;

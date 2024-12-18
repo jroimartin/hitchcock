@@ -1,6 +1,11 @@
-//! Builds Dear ImGui.
+//! Builds third-party dependencies.
 
 fn main() {
+    build_imgui();
+    build_stb_image();
+}
+
+fn build_imgui() {
     const FILES: [&str; 8] = [
         "third_party/cimgui/cimgui.cpp",
         "third_party/cimgui/imgui/imgui.cpp",
@@ -21,4 +26,11 @@ fn main() {
         b = b.file(f);
     }
     b.compile("imgui")
+}
+
+fn build_stb_image() {
+    println!("cargo::rerun-if-changed=third_party/stb_image/stb_image.c");
+    cc::Build::new()
+        .file("third_party/stb_image/stb_image.c")
+        .compile("stb_image");
 }
