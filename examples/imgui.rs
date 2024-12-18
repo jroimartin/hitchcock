@@ -24,12 +24,7 @@ impl Default for App {
     fn default() -> App {
         App {
             window_open: true,
-            rect_color: Vec4 {
-                x: 1.0,
-                y: 0.5,
-                z: 0.2,
-                w: 1.0,
-            },
+            rect_color: Vec4(1.0, 0.5, 0.2, 1.0),
         }
     }
 }
@@ -148,14 +143,7 @@ impl App {
             if self.window_open {
                 let main_viewport = imgui::get_main_viewport();
                 let workpos = main_viewport.get_workpos();
-                imgui::set_next_window_pos(
-                    Vec2 {
-                        x: workpos.x + 10.0,
-                        y: workpos.y + 10.0,
-                    },
-                    None,
-                    None,
-                );
+                imgui::set_next_window_pos(Vec2(workpos.0 + 10.0, workpos.1 + 10.0), None, None);
                 if imgui::begin(
                     "Configuration",
                     Some(&mut self.window_open),

@@ -167,7 +167,7 @@ pub enum Uniform {
 
 impl From<Vec4<f32>> for Uniform {
     fn from(v: Vec4<f32>) -> Uniform {
-        Uniform::Vec4(v.x, v.y, v.z, v.w)
+        Uniform::Vec4(v.0, v.1, v.2, v.3)
     }
 }
 

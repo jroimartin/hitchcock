@@ -187,23 +187,17 @@ mod ffi {
 
     #[derive(Clone, Copy)]
     #[repr(C)]
-    pub struct ImVec2 {
-        pub x: c_float,
-        pub y: c_float,
-    }
+    pub struct ImVec2(pub c_float, pub c_float);
 
     impl From<Vec2<f32>> for ImVec2 {
         fn from(v: Vec2<f32>) -> ImVec2 {
-            ImVec2 {
-                x: v.x as c_float,
-                y: v.y as c_float,
-            }
+            ImVec2(v.0 as c_float, v.1 as c_float)
         }
     }
 
     impl From<ImVec2> for Vec2<f32> {
         fn from(v: ImVec2) -> Vec2<f32> {
-            Vec2 { x: v.x, y: v.y }
+            Vec2(v.0, v.1)
         }
     }
 
@@ -410,7 +404,7 @@ pub fn same_line(offset_from_start_x: Option<f32>, spacing: Option<f32>) {
 /// Sets next window position.
 pub fn set_next_window_pos(pos: Vec2<f32>, cond: Option<i32>, pivot: Option<Vec2<f32>>) {
     let cond = cond.unwrap_or(0);
-    let pivot = pivot.unwrap_or(Vec2 { x: 0.0, y: 0.0 });
+    let pivot = pivot.unwrap_or(Vec2(0.0, 0.0));
     unsafe { ffi::igSetNextWindowPos(pos.into(), cond as ffi::ImGuiCond, pivot.into()) }
 }
 
