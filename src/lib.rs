@@ -22,6 +22,9 @@ pub enum Error {
 
     /// Dear ImGui error.
     ImGui(imgui::Error),
+
+    /// stb_image error.
+    StbImage(stb_image::Error),
 }
 
 impl From<glfw::Error> for Error {
@@ -42,12 +45,19 @@ impl From<imgui::Error> for Error {
     }
 }
 
+impl From<stb_image::Error> for Error {
+    fn from(err: stb_image::Error) -> Error {
+        Error::StbImage(err)
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Glfw(err) => write!(f, "GLFW error: {err}"),
             Error::Gl(err) => write!(f, "OpenGL error: {err}"),
             Error::ImGui(err) => write!(f, "Dear ImGui error: {err}"),
+            Error::StbImage(err) => write!(f, "stb_image error: {err}"),
         }
     }
 }

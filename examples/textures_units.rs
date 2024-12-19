@@ -7,6 +7,7 @@ use std::{mem, process};
 use hitchcock::{gl, glfw, stb_image, Result};
 
 const WALL_JPG: &[u8] = include_bytes!("wall.jpg");
+const AWESOMEFACE_PNG: &[u8] = include_bytes!("awesomeface.png");
 
 const INITIAL_WIDTH: i32 = 800;
 const INITIAL_HEIGHT: i32 = 600;
@@ -43,11 +44,12 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 
     out vec4 FragColor;
 
-    uniform sampler2D uTexture;
+    uniform sampler2D uTexture1;
+    uniform sampler2D uTexture2;
 
     void main()
     {
-        FragColor = texture(uTexture, texCoord);
+        FragColor = mix(texture(uTexture1, texCoord), texture(uTexture2, texCoord), 0.2);
     }
     "#;
 
@@ -116,7 +118,7 @@ fn example() -> Result<()> {
     gl::bind_buffer(gl::ARRAY_BUFFER, gl::Buffer::zero());
     gl::bind_vertex_array(gl::VertexArray::zero());
 
-    let tos = gl::gen_textures(1);
+    let tos = gl::gen_textures(2);
 
     let image = stb_image::Image::load_from_memory(WALL_JPG)?;
     gl::bind_texture(gl::TEXTURE_2D, tos[0]);
@@ -140,6 +142,39 @@ fn example() -> Result<()> {
     );
     gl::generate_mipmap(gl::TEXTURE_2D);
 
+    stb_image::set_flip_vertically_on_load(true);
+    let image = stb_image::Image::load_from_memory(AWESOMEFACE_PNG)?;
+    gl::bind_texture(gl::TEXTURE_2D, tos[1]);
+    gl::tex_parameter(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT.into());
+    gl::tex_parameter(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT.into());
+    gl::tex_parameter(
+        gl::TEXTURE_2D,
+        gl::TEXTURE_MIN_FILTER,
+        gl::LINEAR_MIPMAP_LINEAR.into(),
+    );
+    gl::tex_parameter(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR.into());
+    gl::tex_image_2d(
+        gl::TEXTURE_2D,
+        0,
+        gl::RGB,
+        image.width(),
+        image.height(),
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        image.pixels(),
+    );
+    gl::generate_mipmap(gl::TEXTURE_2D);
+
+    gl::use_program(shader_program);
+    gl::uniform(
+        gl::get_uniform_location(shader_program, "uTexture1")?,
+        0.into(),
+    );
+    gl::uniform(
+        gl::get_uniform_location(shader_program, "uTexture2")?,
+        1.into(),
+    );
+
     while !glfw::window_should_close(window) {
         glfw::poll_events();
 
@@ -147,7 +182,12 @@ fn example() -> Result<()> {
         gl::clear(gl::COLOR_BUFFER_BIT);
 
         gl::use_program(shader_program);
+
+        gl::active_texture(gl::TEXTURE0);
         gl::bind_texture(gl::TEXTURE_2D, tos[0]);
+        gl::active_texture(gl::TEXTURE0 + 1);
+        gl::bind_texture(gl::TEXTURE_2D, tos[1]);
+
         gl::bind_vertex_array(vaos[0]);
         gl::draw_arrays(gl::TRIANGLES, 0, 3);
 

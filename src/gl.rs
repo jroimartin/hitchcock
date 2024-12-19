@@ -37,6 +37,7 @@ mod ffi {
         }
     }
 
+    glfn![glActiveTexture, GL_ACTIVE_TEXTURE, (), texture: GLenum];
     glfn![glAttachShader, GL_ATTACH_SHADER, (), program: GLuint, shader: GLuint];
     glfn![glBindBuffer, GL_BIND_BUFFER, (), target: GLenum, buffer: GLuint];
     glfn![glBindTexture, GL_BIND_TEXTURE, (), target: GLenum, texture: GLuint];
@@ -66,6 +67,7 @@ mod ffi {
     glfn![glShaderSource, GL_SHADER_SOURCE, (), shader: GLuint, count: GLsizei, string: *const *const GLchar, length: *const GLint];
     glfn![glTexImage2D, GL_TEX_IMAGE_2D, (), target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, typ: GLenum, data: *const c_void];
     glfn![glTexParameteri, GL_TEX_PARAMETERI, (), target: GLenum, pname: GLenum, param: GLint];
+    glfn![glUniform1i, GL_UNIFORM1I, (), location: GLint, v0: GLint];
     glfn![glUniform4f, GL_UNIFORM4F, (), location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat];
     glfn![glUseProgram, GL_USE_PROGRAM, (), program: GLuint];
     glfn![glVertexAttribPointer, GL_VERTEX_ATTRIB_POINTER, (), index: GLuint, size: GLint, typ: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *const c_void];
@@ -93,12 +95,15 @@ pub const FLOAT: u32 = 0x1406;
 /// RGB format.
 pub const RGB: u32 = 0x1907;
 
+/// RGBA format.
+pub const RGBA: u32 = 0x1908;
+
 /// Linear filtering.
-pub const LINEAR: u32 = 0x2601;
+pub const LINEAR: i32 = 0x2601;
 
 /// Linearly interpolates between the two closest mipmaps and samples
 /// the interpolated level via linear interpolation.
-pub const LINEAR_MIPMAP_LINEAR: u32 = 0x2703;
+pub const LINEAR_MIPMAP_LINEAR: i32 = 0x2703;
 
 /// Texture magnifying filter.
 pub const TEXTURE_MAG_FILTER: u32 = 0x2800;
@@ -113,7 +118,10 @@ pub const TEXTURE_WRAP_S: u32 = 0x2802;
 pub const TEXTURE_WRAP_T: u32 = 0x2803;
 
 /// Repeats the texture image.
-pub const REPEAT: u32 = 0x2901;
+pub const REPEAT: i32 = 0x2901;
+
+/// Texture unit 0.
+pub const TEXTURE0: u32 = 0x84c0;
 
 /// Vertex data.
 pub const ARRAY_BUFFER: u32 = 0x8892;
@@ -208,8 +216,17 @@ impl Texture {
 
 /// Uniform value.
 pub enum Uniform {
-    /// vec4 uniform.
-    Vec4(ffi::GLfloat, ffi::GLfloat, ffi::GLfloat, ffi::GLfloat),
+    /// Integer uniform parameter.
+    Int(i32),
+
+    /// vec4 uniform parameter.
+    Vec4(f32, f32, f32, f32),
+}
+
+impl From<i32> for Uniform {
+    fn from(v: i32) -> Uniform {
+        Uniform::Int(v)
+    }
 }
 
 impl From<Vec4<f32>> for Uniform {
@@ -226,6 +243,12 @@ pub struct UniformLocation(ffi::GLint);
 pub enum TexParam {
     /// Integer texture parameter for scalar commands.
     Int(i32),
+}
+
+impl From<i32> for TexParam {
+    fn from(v: i32) -> TexParam {
+        TexParam::Int(v)
+    }
 }
 
 define_enum! {
@@ -256,6 +279,11 @@ define_enum! {
         Low          => (0x9148, "Low"),
         Notification => (0x826b, "Notification"),
     }
+}
+
+/// Selects active texture unit.
+pub fn active_texture(texture_unit: u32) {
+    unsafe { ffi::glActiveTexture(texture_unit) }
 }
 
 /// Attaches a shader object to a program object.
@@ -508,6 +536,7 @@ pub fn tex_parameter(target: u32, pname: u32, param: TexParam) {
 /// object.
 pub fn uniform(location: UniformLocation, uniform: Uniform) {
     match uniform {
+        Uniform::Int(v) => unsafe { ffi::glUniform1i(location.0, v as ffi::GLint) },
         Uniform::Vec4(v0, v1, v2, v3) => unsafe {
             ffi::glUniform4f(
                 location.0,
