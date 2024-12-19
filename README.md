@@ -10,10 +10,10 @@ Clone this repository recursively.
 git clone --recursive https://github.com/jroimartin/hitchcock.git
 ```
 
-Use cargo to run or build the project. For instance,
+Use cargo to run the examples. For instance,
 
 ```
-cargo run
+cargo run --example hello_triangle
 ```
 
 ## Dependencies
