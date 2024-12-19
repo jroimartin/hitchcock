@@ -151,8 +151,6 @@ fn example() -> Result<()> {
     );
     gl::generate_mipmap(gl::TEXTURE_2D);
 
-    gl::bind_texture(gl::TEXTURE_2D, gl::Texture::zero());
-
     while !glfw::window_should_close(window) {
         glfw::poll_events();
 
