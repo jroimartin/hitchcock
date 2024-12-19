@@ -9,7 +9,7 @@ use std::{
 
 use crate::{macros::define_enum, Vec4};
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, clippy::too_many_arguments)]
 mod ffi {
     use std::ffi::{c_char, c_float, c_int, c_uchar, c_uint, c_void};
 
@@ -39,6 +39,7 @@ mod ffi {
 
     glfn![glAttachShader, GL_ATTACH_SHADER, (), program: GLuint, shader: GLuint];
     glfn![glBindBuffer, GL_BIND_BUFFER, (), target: GLenum, buffer: GLuint];
+    glfn![glBindTexture, GL_BIND_TEXTURE, (), target: GLenum, texture: GLuint];
     glfn![glBindVertexArray, GL_BIND_VERTEX_ARRAY, (), array: GLuint];
     glfn![glBufferData, GL_BUFFER_DATA, (), target: GLenum, size: GLsizeiptr, data: *const c_void, usage: GLenum];
     glfn![glClear, GL_CLEAR, (), mask: GLbitfield];
@@ -56,11 +57,15 @@ mod ffi {
     glfn![glEnable, GL_ENABLE, (), cap: GLenum];
     glfn![glEnableVertexAttribArray, GL_ENABLE_VERTEX_ATTRIB_ARRAY, (), index: GLuint];
     glfn![glGenBuffers, GL_GEN_BUFFERS, (), n: GLsizei, buffers: *mut GLuint];
+    glfn![glGenTextures, GL_GEN_TEXTURES, (), n: GLsizei, textures: *mut GLuint];
     glfn![glGenVertexArrays, GL_GEN_VERTEX_ARRAYS, (), n: GLsizei, arrays: *mut GLuint];
+    glfn![glGenerateMipmap, GL_GENERATE_MIPMAP, (), target: GLenum];
     glfn![glGetError, GL_GET_ERROR, GLenum];
     glfn![glGetUniformLocation, GL_GET_UNIFORM_LOCATION, GLint, program: GLuint, name: *const GLchar];
     glfn![glLinkProgram, GL_LINK_PROGRAM, (), program: GLuint];
     glfn![glShaderSource, GL_SHADER_SOURCE, (), shader: GLuint, count: GLsizei, string: *const *const GLchar, length: *const GLint];
+    glfn![glTexImage2D, GL_TEX_IMAGE_2D, (), target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, typ: GLenum, data: *const c_void];
+    glfn![glTexParameteri, GL_TEX_PARAMETERI, (), target: GLenum, pname: GLenum, param: GLint];
     glfn![glUniform4f, GL_UNIFORM4F, (), location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat];
     glfn![glUseProgram, GL_USE_PROGRAM, (), program: GLuint];
     glfn![glVertexAttribPointer, GL_VERTEX_ATTRIB_POINTER, (), index: GLuint, size: GLint, typ: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *const c_void];
@@ -70,8 +75,45 @@ mod ffi {
 /// Indicates the buffers currently enabled for color writing.
 pub const COLOR_BUFFER_BIT: u32 = 0x00004000;
 
-/// If enabled, debug messages are produced by a debug context.
-pub const DEBUG_OUTPUT: u32 = 0x92e0;
+/// Triangles primitive.
+pub const TRIANGLES: u32 = 0x0004;
+
+/// 2D texture.
+pub const TEXTURE_2D: u32 = 0x0de1;
+
+/// Unsigned integer data type.
+pub const UNSIGNED_INT: u32 = 0x1405;
+
+/// Unsigned byte data type.
+pub const UNSIGNED_BYTE: u32 = 0x1401;
+
+/// Float data type.
+pub const FLOAT: u32 = 0x1406;
+
+/// RGB format.
+pub const RGB: u32 = 0x1907;
+
+/// Linear filtering.
+pub const LINEAR: u32 = 0x2601;
+
+/// Linearly interpolates between the two closest mipmaps and samples
+/// the interpolated level via linear interpolation.
+pub const LINEAR_MIPMAP_LINEAR: u32 = 0x2703;
+
+/// Texture magnifying filter.
+pub const TEXTURE_MAG_FILTER: u32 = 0x2800;
+
+/// Texture minifying filter.
+pub const TEXTURE_MIN_FILTER: u32 = 0x2801;
+
+/// S-axis texture wrapping.
+pub const TEXTURE_WRAP_S: u32 = 0x2802;
+
+/// T-axis texture wrapping.
+pub const TEXTURE_WRAP_T: u32 = 0x2803;
+
+/// Repeats the texture image.
+pub const REPEAT: u32 = 0x2901;
 
 /// Vertex data.
 pub const ARRAY_BUFFER: u32 = 0x8892;
@@ -82,22 +124,16 @@ pub const ELEMENT_ARRAY_BUFFER: u32 = 0x8893;
 /// The data store contents are modified by the application, and used
 /// as the source for GL drawing and image specification commands. The
 /// data store contents will be modified once and used many times.
-pub const STATIC_DRAW: u32 = 0x88E4;
+pub const STATIC_DRAW: u32 = 0x88e4;
 
 /// Fragment shader type.
-pub const FRAGMENT_SHADER: u32 = 0x8B30;
+pub const FRAGMENT_SHADER: u32 = 0x8b30;
 
 /// Vertext shader type.
-pub const VERTEX_SHADER: u32 = 0x8B31;
+pub const VERTEX_SHADER: u32 = 0x8b31;
 
-/// Unsigned integer data type.
-pub const UNSIGNED_INT: u32 = 0x1405;
-
-/// Float data type.
-pub const FLOAT: u32 = 0x1406;
-
-/// Triangles primitive.
-pub const TRIANGLES: u32 = 0x0004;
+/// If enabled, debug messages are produced by a debug context.
+pub const DEBUG_OUTPUT: u32 = 0x92e0;
 
 /// A specialized result type.
 pub type Result<T> = result::Result<T, Error>;
@@ -142,7 +178,7 @@ pub struct Program(ffi::GLuint);
 pub struct VertexArray(ffi::GLuint);
 
 impl VertexArray {
-    /// Returns the reserved vertex array zero.
+    /// Returns the reserved vertex array object zero.
     pub fn zero() -> VertexArray {
         VertexArray(0)
     }
@@ -156,6 +192,17 @@ impl Buffer {
     /// Returns the reserved buffer object zero.
     pub fn zero() -> Buffer {
         Buffer(0)
+    }
+}
+
+/// Texture object.
+#[derive(Clone, Copy)]
+pub struct Texture(ffi::GLuint);
+
+impl Texture {
+    /// Returns the reserved texture object zero.
+    pub fn zero() -> Texture {
+        Texture(0)
     }
 }
 
@@ -174,6 +221,12 @@ impl From<Vec4<f32>> for Uniform {
 /// Uniform location.
 #[derive(Clone, Copy)]
 pub struct UniformLocation(ffi::GLint);
+
+/// Texture parameter.
+pub enum TexParam {
+    /// Integer texture parameter for scalar commands.
+    Int(i32),
+}
 
 define_enum! {
     pub enum DebugSource(u32, "Debug source") {
@@ -212,7 +265,12 @@ pub fn attach_shader(program: Program, shader: Shader) {
 
 /// Binds a named buffer object.
 pub fn bind_buffer(target: u32, buffer: Buffer) {
-    unsafe { ffi::glBindBuffer(target, buffer.0) }
+    unsafe { ffi::glBindBuffer(target as ffi::GLenum, buffer.0) }
+}
+
+/// Binds a named texture to a texturing target.
+pub fn bind_texture(target: u32, texture: Texture) {
+    unsafe { ffi::glBindTexture(target as ffi::GLenum, texture.0) }
 }
 
 /// Binds a vertex array object.
@@ -224,7 +282,7 @@ pub fn bind_vertex_array(array: VertexArray) {
 pub fn buffer_data<T>(target: u32, data: &[T], usage: u32) {
     unsafe {
         ffi::glBufferData(
-            target,
+            target as ffi::GLenum,
             mem::size_of_val(data),
             data.as_ptr() as *const c_void,
             usage,
@@ -342,16 +400,28 @@ pub fn enable_vertex_attrib_array(index: u32) {
 
 /// Generates buffer object names.
 pub fn gen_buffers(n: usize) -> Vec<Buffer> {
-    let buffers = vec![Buffer::zero(); n];
-    unsafe { ffi::glGenBuffers(n as ffi::GLsizei, buffers.as_ptr() as *mut ffi::GLuint) };
+    let mut buffers = vec![Buffer::zero(); n];
+    unsafe { ffi::glGenBuffers(n as ffi::GLsizei, buffers.as_mut_ptr() as *mut ffi::GLuint) };
     buffers
+}
+
+/// Generates texture names.
+pub fn gen_textures(n: usize) -> Vec<Texture> {
+    let mut textures = vec![Texture::zero(); n];
+    unsafe { ffi::glGenTextures(n as ffi::GLsizei, textures.as_mut_ptr() as *mut ffi::GLuint) };
+    textures
 }
 
 /// Generates vertex array object names.
 pub fn gen_vertex_arrays(n: usize) -> Vec<VertexArray> {
-    let arrays = vec![VertexArray::zero(); n];
-    unsafe { ffi::glGenVertexArrays(n as ffi::GLsizei, arrays.as_ptr() as *mut ffi::GLuint) };
+    let mut arrays = vec![VertexArray::zero(); n];
+    unsafe { ffi::glGenVertexArrays(n as ffi::GLsizei, arrays.as_mut_ptr() as *mut ffi::GLuint) };
     arrays
+}
+
+/// Generates mipmaps for a specified texture object.
+pub fn generate_mipmap(target: u32) {
+    unsafe { ffi::glGenerateMipmap(target as ffi::GLenum) }
 }
 
 /// Returns the value of the error flag.
@@ -392,6 +462,46 @@ pub fn shader_source(shader: Shader, sources: &[&str]) -> Result<()> {
         )
     };
     Ok(())
+}
+
+/// Specifies a two-dimensional texture image.
+#[allow(clippy::too_many_arguments)]
+pub fn tex_image_2d(
+    target: u32,
+    level: i32,
+    internal_format: u32,
+    width: usize,
+    height: usize,
+    format: u32,
+    typ: u32,
+    data: &[u8],
+) {
+    unsafe {
+        ffi::glTexImage2D(
+            target as ffi::GLenum,
+            level as ffi::GLint,
+            internal_format as ffi::GLint,
+            width as ffi::GLsizei,
+            height as ffi::GLsizei,
+            0,
+            format as ffi::GLenum,
+            typ as ffi::GLenum,
+            data.as_ptr() as *const c_void,
+        )
+    }
+}
+
+/// Sets texture parameters.
+pub fn tex_parameter(target: u32, pname: u32, param: TexParam) {
+    match param {
+        TexParam::Int(param) => unsafe {
+            ffi::glTexParameteri(
+                target as ffi::GLenum,
+                pname as ffi::GLenum,
+                param as ffi::GLint,
+            )
+        },
+    }
 }
 
 /// Specify the value of a uniform variable for the current program

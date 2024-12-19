@@ -54,7 +54,7 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {}
 
-/// 2-dimensional vector.
+/// Two-dimensional vector.
 #[derive(Copy, Clone)]
 pub struct Vec2<T>(pub T, pub T);
 
@@ -70,7 +70,7 @@ impl<T: Copy> From<[T; 2]> for Vec2<T> {
     }
 }
 
-/// 3-dimensional vector.
+/// Three-dimensional vector.
 #[derive(Copy, Clone)]
 pub struct Vec3<T>(pub T, pub T, pub T);
 
@@ -86,7 +86,7 @@ impl<T: Copy> From<[T; 3]> for Vec3<T> {
     }
 }
 
-/// 4-dimensional vector.
+/// Four-dimensional vector.
 #[derive(Copy, Clone)]
 pub struct Vec4<T>(pub T, pub T, pub T, pub T);
 
