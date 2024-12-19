@@ -1,4 +1,5 @@
-//! [Textures] lesson of LearnOpenGL.
+//! [Textures] lesson of LearnOpenGL. This example introduces texture
+//! units.
 //!
 //! [Textures]: https://learnopengl.com/Getting-started/Textures
 
@@ -12,17 +13,22 @@ const AWESOMEFACE_PNG: &[u8] = include_bytes!("awesomeface.png");
 const INITIAL_WIDTH: i32 = 800;
 const INITIAL_HEIGHT: i32 = 600;
 
-const VERTICES: [f32; 15] = [
+const VERTICES: [f32; 20] = [
     // Bottom left corner.
     -0.5, -0.5, 0.0, // Coordinates.
     0.0, 0.0, // Texture coordinates.
     // Bottom right corner.
     0.5, -0.5, 0.0, // Coordinates.
     1.0, 0.0, // Texture coordinates.
-    // Top corner.
-    0.0, 0.5, 0.0, // Coordinates.
-    0.5, 1.0, // Texture coordinates.
+    // Top left corner.
+    -0.5, 0.5, 0.0, // Coordinates.
+    0.0, 1.0, // Texture coordinates.
+    // Top right corner.
+    0.5, 0.5, 0.0, // Coordinates.
+    1.0, 1.0, // Texture coordinates.
 ];
+
+const INDICES: [u32; 6] = [0, 1, 3, 3, 2, 0];
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -72,7 +78,7 @@ fn example() -> Result<()> {
     let window = glfw::create_window(
         INITIAL_WIDTH,
         INITIAL_HEIGHT,
-        "LearnOpenGL: Textures",
+        "LearnOpenGL: Textures with texture units",
         None,
         None,
     )?;
@@ -99,10 +105,13 @@ fn example() -> Result<()> {
 
     let vaos = gl::gen_vertex_arrays(1);
     let vbos = gl::gen_buffers(1);
+    let ebos = gl::gen_buffers(1);
 
     gl::bind_vertex_array(vaos[0]);
     gl::bind_buffer(gl::ARRAY_BUFFER, vbos[0]);
     gl::buffer_data(gl::ARRAY_BUFFER, &VERTICES, gl::STATIC_DRAW);
+    gl::bind_buffer(gl::ELEMENT_ARRAY_BUFFER, ebos[0]);
+    gl::buffer_data(gl::ELEMENT_ARRAY_BUFFER, &INDICES, gl::STATIC_DRAW);
     gl::vertex_attrib_pointer(0, 3, gl::FLOAT, false, 5 * mem::size_of::<f32>(), 0);
     gl::enable_vertex_attrib_array(0);
     gl::vertex_attrib_pointer(
@@ -168,11 +177,11 @@ fn example() -> Result<()> {
     gl::use_program(shader_program);
     gl::uniform(
         gl::get_uniform_location(shader_program, "uTexture1")?,
-        0.into(),
+        gl::Uniform::from(0),
     );
     gl::uniform(
         gl::get_uniform_location(shader_program, "uTexture2")?,
-        1.into(),
+        gl::Uniform::from(1),
     );
 
     while !glfw::window_should_close(window) {
@@ -189,7 +198,7 @@ fn example() -> Result<()> {
         gl::bind_texture(gl::TEXTURE_2D, tos[1]);
 
         gl::bind_vertex_array(vaos[0]);
-        gl::draw_arrays(gl::TRIANGLES, 0, 3);
+        gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
 
         glfw::swap_buffers(window);
     }
