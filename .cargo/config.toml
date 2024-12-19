@@ -1,3 +1,3 @@
 [alias]
-pedant = "clippy -- -W missing_docs"
+pedant = "clippy --all-targets -- -W missing_docs"
 p = "pedant"
