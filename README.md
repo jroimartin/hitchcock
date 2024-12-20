@@ -22,8 +22,8 @@ cargo pedant
 
 ## Examples
 
-Examples are located in the </examples> folder. Use the following
-command to run an example:
+Examples are located in the [/examples](/examples) folder. Use the
+following command to run an example:
 
 ```
 cargo run --example <name>
