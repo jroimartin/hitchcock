@@ -96,7 +96,11 @@ fn run() -> Result<()> {
 
     glfw::set_error_callback(Some(glfw_error_callback));
 
-    let window = build_window()?;
+    let window = build_window(
+        INITIAL_WIDTH,
+        INITIAL_HEIGHT,
+        "LearnOpenGL: Textures with texture units",
+    )?;
     glfw::make_context_current(window);
     glfw::set_framebuffer_size_callback(window, Some(glfw_framebuffer_size_callback));
 
@@ -142,17 +146,11 @@ fn run() -> Result<()> {
     Ok(())
 }
 
-fn build_window() -> Result<glfw::Window> {
+fn build_window(width: i32, height: i32, title: &str) -> Result<glfw::Window> {
     glfw::window_hint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 3);
     glfw::window_hint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
-    let window = glfw::create_window(
-        INITIAL_WIDTH,
-        INITIAL_HEIGHT,
-        "LearnOpenGL: Textures with texture units",
-        None,
-        None,
-    )?;
+    let window = glfw::create_window(width, height, title, None, None)?;
     Ok(window)
 }
 
