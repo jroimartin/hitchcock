@@ -7,12 +7,13 @@ use std::{mem, process};
 
 use hitchcock::{gl, glfw, stb_image, Result};
 
-const WALL_JPG: &[u8] = include_bytes!("wall.jpg");
-const AWESOMEFACE_PNG: &[u8] = include_bytes!("awesomeface.png");
-
+/// Initial width of the window.
 const INITIAL_WIDTH: i32 = 800;
+
+/// Initial height of the window.
 const INITIAL_HEIGHT: i32 = 600;
 
+/// Vertex data.
 const VERTICES: [f32; 20] = [
     // Bottom left corner.
     -0.5, -0.5, 0.0, // Coordinates.
@@ -28,6 +29,7 @@ const VERTICES: [f32; 20] = [
     1.0, 1.0, // Texture coordinates.
 ];
 
+/// Defines the layout of the vertex data.
 struct VertexLayout {
     size: usize,
     typ: u32,
@@ -36,6 +38,7 @@ struct VertexLayout {
     pointer: usize,
 }
 
+/// Vertex data layout.
 const LAYOUTS: [VertexLayout; 2] = [
     VertexLayout {
         size: 3,
@@ -53,8 +56,10 @@ const LAYOUTS: [VertexLayout; 2] = [
     },
 ];
 
+/// Elements.
 const INDICES: [u32; 6] = [0, 1, 3, 3, 2, 0];
 
+/// Vertex shader source code.
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
     layout (location = 0) in vec3 aPos;
@@ -69,6 +74,7 @@ const VERTEX_SHADER_SOURCE: &str = r#"
     }
     "#;
 
+/// Fragment shader source code.
 const FRAGMENT_SHADER_SOURCE: &str = r#"
     #version 330 core
     in vec2 texCoord;
@@ -84,13 +90,13 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
     }
     "#;
 
-fn main() {
-    run().unwrap_or_else(|err| {
-        println!("Error: {err}");
-        process::exit(1);
-    });
-}
+/// Embedded wall texture.
+const WALL_JPG: &[u8] = include_bytes!("wall.jpg");
 
+/// Embedded "awesome face" texture.
+const AWESOMEFACE_PNG: &[u8] = include_bytes!("awesomeface.png");
+
+/// Runs the example.
 fn run() -> Result<()> {
     glfw::init()?;
 
@@ -146,6 +152,7 @@ fn run() -> Result<()> {
     Ok(())
 }
 
+/// Creates a system window.
 fn build_window(width: i32, height: i32, title: &str) -> Result<glfw::Window> {
     glfw::window_hint(glfw::CONTEXT_VERSION_MAJOR, 3);
     glfw::window_hint(glfw::CONTEXT_VERSION_MINOR, 3);
@@ -154,6 +161,7 @@ fn build_window(width: i32, height: i32, title: &str) -> Result<glfw::Window> {
     Ok(window)
 }
 
+/// Compiles and links a shader program.
 fn build_shader_program(vertex_shader_src: &str, fragment_shader_src: &str) -> Result<gl::Program> {
     let vertex_shader = gl::create_shader(gl::VERTEX_SHADER);
     gl::shader_source(vertex_shader, &[vertex_shader_src])?;
@@ -173,6 +181,8 @@ fn build_shader_program(vertex_shader_src: &str, fragment_shader_src: &str) -> R
     Ok(shader_program)
 }
 
+/// Sets up the vertex buffers. Returns a tuple of the form
+/// `(vertex_arrays, vertex_buffers, element_buffers)`.
 fn build_buffers(
     vertices: &[f32],
     layouts: &[VertexLayout],
@@ -206,6 +216,7 @@ fn build_buffers(
     (vaos[0], vbos[0], ebos[0])
 }
 
+/// Sets up a 2D texture.
 fn build_texture(
     shader_program: gl::Program,
     texture_uniform: &str,
@@ -235,14 +246,17 @@ fn build_texture(
     Ok(tos[0])
 }
 
+/// GLFW error callaback.
 fn glfw_error_callback(error_code: glfw::ErrorCode, description: &str) {
     eprintln!("GLFW error: {error_code}: {description}");
 }
 
+/// GLFW framebuffer resize callback.
 fn glfw_framebuffer_size_callback(_window: glfw::Window, width: i32, height: i32) {
     gl::viewport(0, 0, width, height);
 }
 
+/// OpenGL debug message callback.
 fn gl_debug_callback(
     source: gl::DebugSource,
     typ: gl::DebugType,
@@ -251,4 +265,11 @@ fn gl_debug_callback(
     message: &str,
 ) {
     eprintln!("GL debug: {typ} ({severity}): {source}: {message} ({id})");
+}
+
+fn main() {
+    run().unwrap_or_else(|err| {
+        println!("Error: {err}");
+        process::exit(1);
+    });
 }
