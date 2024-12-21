@@ -7,7 +7,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::{macros::define_enum, Vec4};
+use crate::{macros::define_enum, stb_image, Vec4};
 
 #[allow(non_snake_case, clippy::too_many_arguments)]
 mod ffi {
@@ -52,6 +52,7 @@ mod ffi {
     glfn![glDeleteBuffers, GL_DELETE_BUFFERS, (), n: GLsizei, buffers: *const GLuint];
     glfn![glDeleteProgram, GL_DELETE_PROGRAM, (), program: GLuint];
     glfn![glDeleteShader, GL_DELETE_SHADER, (), shader: GLuint];
+    glfn![glDeleteTextures, GL_DELETE_TEXTURES, (), n: GLsizei, textures: *const GLuint];
     glfn![glDeleteVertexArrays, GL_DELETE_VERTEX_ARRAYS, (), n: GLsizei, arrays: *const GLuint];
     glfn![glDrawArrays, GL_DRAW_ARRAYS, (), mode: GLenum, first: GLint, count: GLsizei];
     glfn![glDrawElements, GL_DRAW_ELEMENTS, (), mode: GLenum, count: GLsizei, typ: GLenum, indices: *const c_void];
@@ -396,6 +397,16 @@ pub fn delete_shader(shader: Shader) {
     unsafe { ffi::glDeleteShader(shader.0) }
 }
 
+/// Delete named textures.
+pub fn delete_textures(textures: &[Texture]) {
+    unsafe {
+        ffi::glDeleteTextures(
+            textures.len() as ffi::GLsizei,
+            textures.as_ptr() as *const ffi::GLuint,
+        )
+    }
+}
+
 /// Deletes vertex array objects.
 pub fn delete_vertex_arrays(arrays: &[VertexArray]) {
     unsafe {
@@ -493,28 +504,24 @@ pub fn shader_source(shader: Shader, sources: &[&str]) -> Result<()> {
 }
 
 /// Specifies a two-dimensional texture image.
-#[allow(clippy::too_many_arguments)]
 pub fn tex_image_2d(
     target: u32,
     level: i32,
     internal_format: u32,
-    width: usize,
-    height: usize,
+    image: &stb_image::Image,
     format: u32,
-    typ: u32,
-    data: &[u8],
 ) {
     unsafe {
         ffi::glTexImage2D(
             target as ffi::GLenum,
             level as ffi::GLint,
             internal_format as ffi::GLint,
-            width as ffi::GLsizei,
-            height as ffi::GLsizei,
+            image.width() as ffi::GLsizei,
+            image.height() as ffi::GLsizei,
             0,
             format as ffi::GLenum,
-            typ as ffi::GLenum,
-            data.as_ptr() as *const c_void,
+            UNSIGNED_BYTE,
+            image.pixels().as_ptr() as *const c_void,
         )
     }
 }

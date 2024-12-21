@@ -128,16 +128,7 @@ fn example() -> Result<()> {
         gl::LINEAR_MIPMAP_LINEAR.into(),
     );
     gl::tex_parameter(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR.into());
-    gl::tex_image_2d(
-        gl::TEXTURE_2D,
-        0,
-        gl::RGB,
-        image.width(),
-        image.height(),
-        gl::RGB,
-        gl::UNSIGNED_BYTE,
-        image.pixels(),
-    );
+    gl::tex_image_2d(gl::TEXTURE_2D, 0, gl::RGB, &image, gl::RGB);
     gl::generate_mipmap(gl::TEXTURE_2D);
 
     while !glfw::window_should_close(window) {
