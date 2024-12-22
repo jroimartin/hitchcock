@@ -104,26 +104,26 @@ define_vec!(Vec3, 3);
 define_vec!(Vec4, 4);
 
 macro_rules! define_mat {
-    ($name:ident, $n:expr, $m:expr) => {
-        #[doc = concat!($n, "x", $m, " matrix.")]
+    ($name:ident, $cols:expr, $rows:expr) => {
+        #[doc = concat!($cols, "x", $rows, " matrix.")]
         #[derive(Copy, Clone, Default)]
         #[repr(C)]
-        pub struct $name<T>([[T; $n]; $m]);
+        pub struct $name<T>([[T; $cols]; $rows]);
 
-        impl<T> std::convert::From<$name<T>> for [[T; $n]; $m] {
-            fn from(v: $name<T>) -> [[T; $n]; $m] {
+        impl<T> std::convert::From<$name<T>> for [[T; $cols]; $rows] {
+            fn from(v: $name<T>) -> [[T; $cols]; $rows] {
                 v.0
             }
         }
 
-        impl<T: std::marker::Copy> std::convert::From<[[T; $n]; $m]> for $name<T> {
-            fn from(v: [[T; $n]; $m]) -> $name<T> {
+        impl<T: std::marker::Copy> std::convert::From<[[T; $cols]; $rows]> for $name<T> {
+            fn from(v: [[T; $cols]; $rows]) -> $name<T> {
                 $name(v)
             }
         }
 
         impl<T> std::ops::Deref for $name<T> {
-            type Target = [[T; $n]];
+            type Target = [[T; $cols]];
 
             fn deref(&self) -> &Self::Target {
                 &self.0
@@ -145,9 +145,51 @@ macro_rules! define_mat {
     };
 }
 
+define_mat!(Mat2, 2, 2);
+define_mat!(Mat3, 3, 3);
 define_mat!(Mat4, 4, 4);
+define_mat!(Mat2x3, 2, 3);
+define_mat!(Mat3x2, 3, 2);
+define_mat!(Mat2x4, 2, 4);
+define_mat!(Mat4x2, 4, 2);
+define_mat!(Mat3x4, 3, 4);
+define_mat!(Mat4x3, 4, 3);
 
-// TODO: write a proper matrix arithmetic library.
+impl Mat4<f32> {
+    /// Returns the identity matrix.
+    pub fn identity() -> Mat4<f32> {
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    }
+
+    /// Builds a scaling matrix.
+    pub fn scale(x: f32, y: f32, z: f32) -> Mat4<f32> {
+        [
+            [x, 0.0, 0.0, 0.0],
+            [0.0, y, 0.0, 0.0],
+            [0.0, 0.0, z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    }
+
+    /// Builds a translation matrix.
+    pub fn translate(x: f32, y: f32, z: f32) -> Mat4<f32> {
+        [
+            [1.0, 0.0, 0.0, x],
+            [0.0, 1.0, 0.0, y],
+            [0.0, 0.0, 1.0, z],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    }
+}
+
 impl ops::Mul<Mat4<f32>> for Mat4<f32> {
     type Output = Mat4<f32>;
 
@@ -161,41 +203,5 @@ impl ops::Mul<Mat4<f32>> for Mat4<f32> {
             }
         }
         result
-    }
-}
-
-// TODO: write a proper matrix transformation library.
-impl Mat4<f32> {
-    /// Returns the identity matrix.
-    pub fn identity() -> Mat4<f32> {
-        [
-            [1.0, 0.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-        .into()
-    }
-
-    /// Returns a scaling matrix.
-    pub fn scale(x: f32, y: f32, z: f32) -> Mat4<f32> {
-        [
-            [x, 0.0, 0.0, 0.0],
-            [0.0, y, 0.0, 0.0],
-            [0.0, 0.0, z, 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-        .into()
-    }
-
-    /// Returns a translation matrix.
-    pub fn translate(x: f32, y: f32, z: f32) -> Mat4<f32> {
-        [
-            [1.0, 0.0, 0.0, x],
-            [0.0, 1.0, 0.0, y],
-            [0.0, 0.0, 1.0, z],
-            [0.0, 0.0, 0.0, 1.0],
-        ]
-        .into()
     }
 }
