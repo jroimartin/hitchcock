@@ -4,10 +4,7 @@
 
 use std::{mem, process};
 
-use hitchcock::{
-    gl::{self, Uniform},
-    glfw, stb_image, Mat4, Result,
-};
+use hitchcock::{gl, glfw, stb_image, Mat4, Result};
 
 /// Initial width of the window.
 const INITIAL_WIDTH: i32 = 800;
@@ -18,16 +15,16 @@ const INITIAL_HEIGHT: i32 = 600;
 /// Vertex data.
 const VERTICES: [f32; 20] = [
     // Bottom left corner.
-    -0.5, -0.5, 0.0, // Coordinates.
+    -1.0, -1.0, 0.0, // Coordinates.
     0.0, 0.0, // Texture coordinates.
     // Bottom right corner.
-    0.5, -0.5, 0.0, // Coordinates.
+    1.0, -1.0, 0.0, // Coordinates.
     1.0, 0.0, // Texture coordinates.
     // Top left corner.
-    -0.5, 0.5, 0.0, // Coordinates.
+    -1.0, 1.0, 0.0, // Coordinates.
     0.0, 1.0, // Texture coordinates.
     // Top right corner.
-    0.5, 0.5, 0.0, // Coordinates.
+    1.0, 1.0, 0.0, // Coordinates.
     1.0, 1.0, // Texture coordinates.
 ];
 
@@ -128,6 +125,8 @@ fn run() -> Result<()> {
     let to_face = build_texture(shader_program, "uTexture2", 1, &image, gl::RGBA)?;
 
     let uniform_location = gl::get_uniform_location(shader_program, "uTransform")?;
+    let transform_tl = Mat4::translate(-0.5, 0.5, 0.0) * Mat4::scale(0.5, 0.5, 0.0);
+    let transform_br = Mat4::translate(0.5, -0.5, 0.0) * Mat4::scale(0.5, 0.5, 0.0);
 
     while !glfw::window_should_close(window) {
         glfw::poll_events();
@@ -142,15 +141,10 @@ fn run() -> Result<()> {
         gl::active_texture(gl::TEXTURE0 + 1);
         gl::bind_texture(gl::TEXTURE_2D, to_face);
 
-        gl::uniform(
-            uniform_location,
-            Uniform::Mat4 {
-                v: Mat4::identity(),
-                transpose: false,
-            },
-        );
-
         gl::bind_vertex_array(vao);
+        gl::uniform(uniform_location, transform_tl.into());
+        gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
+        gl::uniform(uniform_location, transform_br.into());
         gl::draw_elements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, 0);
 
         glfw::swap_buffers(window);

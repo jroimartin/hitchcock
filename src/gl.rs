@@ -228,14 +228,7 @@ pub enum Uniform {
     Vec4(Vec4<f32>),
 
     /// mat4 uniform parameter.
-    Mat4 {
-        /// Matrix data.
-        v: Mat4<f32>,
-
-        /// Whether to transpose the matrix as the values are loaded
-        /// into the uniform variable
-        transpose: bool,
-    },
+    Mat4(Mat4<f32>),
 }
 
 impl From<i32> for Uniform {
@@ -247,6 +240,12 @@ impl From<i32> for Uniform {
 impl From<Vec4<f32>> for Uniform {
     fn from(v: Vec4<f32>) -> Uniform {
         Uniform::Vec4(v)
+    }
+}
+
+impl From<Mat4<f32>> for Uniform {
+    fn from(v: Mat4<f32>) -> Uniform {
+        Uniform::Mat4(v)
     }
 }
 
@@ -553,10 +552,7 @@ pub fn uniform(location: UniformLocation, uniform: Uniform) {
     match uniform {
         Uniform::Int(v) => unsafe { ffi::glUniform1i(location.0, v) },
         Uniform::Vec4(v) => unsafe { ffi::glUniform4f(location.0, v[0], v[1], v[2], v[3]) },
-        Uniform::Mat4 { v, transpose } => {
-            let c_transpose: ffi::GLboolean = if transpose { 1 } else { 0 };
-            unsafe { ffi::glUniformMatrix4fv(location.0, 1, c_transpose, v.as_ptr()) }
-        }
+        Uniform::Mat4(v) => unsafe { ffi::glUniformMatrix4fv(location.0, 1, 1, v.as_ptr()) },
     }
 }
 

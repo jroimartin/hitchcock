@@ -1,6 +1,6 @@
 //! Utilities for creating demos.
 
-use std::{error, fmt, result};
+use std::{error, fmt, ops, result};
 
 pub mod gl;
 pub mod glfw;
@@ -147,6 +147,24 @@ macro_rules! define_mat {
 
 define_mat!(Mat4, 4, 4);
 
+// TODO: write a proper matrix arithmetic library.
+impl ops::Mul<Mat4<f32>> for Mat4<f32> {
+    type Output = Mat4<f32>;
+
+    fn mul(self, rhs: Mat4<f32>) -> Self::Output {
+        let mut result = Mat4::default();
+        for i in 0..4 {
+            for j in 0..4 {
+                for k in 0..4 {
+                    result[i][j] += self[i][k] * rhs[k][j]
+                }
+            }
+        }
+        result
+    }
+}
+
+// TODO: write a proper matrix transformation library.
 impl Mat4<f32> {
     /// Returns the identity matrix.
     pub fn identity() -> Mat4<f32> {
@@ -154,6 +172,28 @@ impl Mat4<f32> {
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    }
+
+    /// Returns a scaling matrix.
+    pub fn scale(x: f32, y: f32, z: f32) -> Mat4<f32> {
+        [
+            [x, 0.0, 0.0, 0.0],
+            [0.0, y, 0.0, 0.0],
+            [0.0, 0.0, z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    }
+
+    /// Returns a translation matrix.
+    pub fn translate(x: f32, y: f32, z: f32) -> Mat4<f32> {
+        [
+            [1.0, 0.0, 0.0, x],
+            [0.0, 1.0, 0.0, y],
+            [0.0, 0.0, 1.0, z],
             [0.0, 0.0, 0.0, 1.0],
         ]
         .into()
