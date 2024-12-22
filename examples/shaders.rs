@@ -100,7 +100,10 @@ fn example() -> Result<()> {
 
         let glfw_time = glfw::get_time() as f32;
         let green_comp = glfw_time.sin() / 2.0 + 0.5;
-        gl::uniform(uniform_location, Vec4(0.0, green_comp, 0.0, 1.0).into());
+        gl::uniform(
+            uniform_location,
+            Vec4::from([0.0, green_comp, 0.0, 1.0]).into(),
+        );
 
         gl::bind_vertex_array(vaos[0]);
         gl::draw_arrays(gl::TRIANGLES, 0, 3);

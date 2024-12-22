@@ -11,7 +11,7 @@ macro_rules! define_enum {
             #[doc = concat!($variant_doc, ".")]
             $variant_name,
             )+
-            #[doc = "Unknown."]
+            /// Unknown.
             Unknown($enum_type),
         }
 

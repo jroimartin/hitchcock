@@ -2,7 +2,7 @@
 
 use std::{
     error,
-    ffi::{c_float, c_uchar, CString, NulError},
+    ffi::{c_uchar, CString, NulError},
     fmt, ptr, result,
 };
 
@@ -187,17 +187,17 @@ mod ffi {
 
     #[derive(Clone, Copy)]
     #[repr(C)]
-    pub struct ImVec2(pub c_float, pub c_float);
+    pub struct ImVec2([c_float; 2]);
 
     impl From<Vec2<f32>> for ImVec2 {
         fn from(v: Vec2<f32>) -> ImVec2 {
-            ImVec2(v.0 as c_float, v.1 as c_float)
+            ImVec2(v.0)
         }
     }
 
     impl From<ImVec2> for Vec2<f32> {
         fn from(v: ImVec2) -> Vec2<f32> {
-            Vec2(v.0, v.1)
+            v.0.into()
         }
     }
 
@@ -310,23 +310,11 @@ pub fn begin(name: &str, open: Option<&mut bool>, flags: Option<i32>) -> Result<
     let unfolded = match open {
         Some(open) => {
             let mut copen: c_uchar = if *open { 1 } else { 0 };
-            let unfolded = unsafe {
-                ffi::igBegin(
-                    name.as_ptr(),
-                    &mut copen as *mut c_uchar,
-                    flags as ffi::ImGuiWindowFlags,
-                )
-            };
+            let unfolded = unsafe { ffi::igBegin(name.as_ptr(), &mut copen, flags) };
             *open = copen != 0;
             unfolded
         }
-        None => unsafe {
-            ffi::igBegin(
-                name.as_ptr(),
-                ptr::null_mut(),
-                flags as ffi::ImGuiWindowFlags,
-            )
-        },
+        None => unsafe { ffi::igBegin(name.as_ptr(), ptr::null_mut(), flags) },
     };
     Ok(unfolded != 0)
 }
@@ -336,7 +324,7 @@ pub fn begin(name: &str, open: Option<&mut bool>, flags: Option<i32>) -> Result<
 pub fn checkbox(label: &str, checked: &mut bool) -> Result<bool> {
     let label = CString::new(label)?;
     let mut cchecked: c_uchar = if *checked { 1 } else { 0 };
-    let changed = unsafe { ffi::igCheckbox(label.as_ptr(), &mut cchecked as *mut c_uchar) };
+    let changed = unsafe { ffi::igCheckbox(label.as_ptr(), &mut cchecked) };
     *checked = cchecked != 0;
     Ok(changed != 0)
 }
@@ -347,13 +335,7 @@ pub fn color_edit4(label: &str, col: &mut Vec4<f32>, flags: Option<i32>) -> Resu
     let label = CString::new(label)?;
     let mut ccol: [f32; 4] = (*col).into();
     let flags = flags.unwrap_or(0);
-    let changed = unsafe {
-        ffi::igColorEdit4(
-            label.as_ptr(),
-            ccol.as_mut_ptr() as *mut c_float,
-            flags as ffi::ImGuiColorEditFlags,
-        )
-    };
+    let changed = unsafe { ffi::igColorEdit4(label.as_ptr(), ccol.as_mut_ptr(), flags) };
     *col = ccol.into();
     Ok(changed != 0)
 }
@@ -404,14 +386,14 @@ pub fn same_line(offset_from_start_x: Option<f32>, spacing: Option<f32>) {
 /// Sets next window position.
 pub fn set_next_window_pos(pos: Vec2<f32>, cond: Option<i32>, pivot: Option<Vec2<f32>>) {
     let cond = cond.unwrap_or(0);
-    let pivot = pivot.unwrap_or(Vec2(0.0, 0.0));
-    unsafe { ffi::igSetNextWindowPos(pos.into(), cond as ffi::ImGuiCond, pivot.into()) }
+    let pivot = pivot.unwrap_or([0.0, 0.0].into());
+    unsafe { ffi::igSetNextWindowPos(pos.into(), cond, pivot.into()) }
 }
 
 /// Sets next window size.
 pub fn set_next_window_size(size: Vec2<f32>, cond: Option<i32>) {
     let cond = cond.unwrap_or(0);
-    unsafe { ffi::igSetNextWindowSize(size.into(), cond as ffi::ImGuiCond) }
+    unsafe { ffi::igSetNextWindowSize(size.into(), cond) }
 }
 
 /// Shows the Deam ImGui demo window. If `open` is [`Option::Some`],
@@ -422,7 +404,7 @@ pub fn show_demo_window(open: Option<&mut bool>) {
     match open {
         Some(open) => {
             let mut copen: c_uchar = if *open { 1 } else { 0 };
-            unsafe { ffi::igShowDemoWindow(&mut copen as *mut c_uchar) };
+            unsafe { ffi::igShowDemoWindow(&mut copen) };
             *open = copen != 0;
         }
         None => unsafe { ffi::igShowDemoWindow(ptr::null_mut()) },
@@ -443,16 +425,8 @@ pub fn slider_float(
     let format = format.map_or(CString::new("%.3f"), CString::new)?;
     let flags = flags.unwrap_or(0);
 
-    let changed = unsafe {
-        ffi::igSliderFloat(
-            label.as_ptr(),
-            v as *mut c_float,
-            min,
-            max,
-            format.as_ptr(),
-            flags as ffi::ImGuiSliderFlags,
-        )
-    };
+    let changed =
+        unsafe { ffi::igSliderFloat(label.as_ptr(), v, min, max, format.as_ptr(), flags) };
     Ok(changed != 0)
 }
 
@@ -469,7 +443,7 @@ pub struct IO(*mut ffi::ImGuiIO);
 impl IO {
     /// Sets the configuration flags.
     pub fn set_config_flags(&mut self, flags: i32) {
-        unsafe { (*self.0).ConfigFlags = flags as ffi::ImGuiConfigFlags };
+        unsafe { (*self.0).ConfigFlags = flags };
     }
 
     /// Returns the configuration flags.

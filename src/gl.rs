@@ -7,7 +7,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::{macros::define_enum, stb_image, Vec4};
+use crate::{macros::define_enum, stb_image, Mat4, Vec4};
 
 #[allow(non_snake_case, clippy::too_many_arguments)]
 mod ffi {
@@ -70,6 +70,7 @@ mod ffi {
     glfn![glTexParameteri, GL_TEX_PARAMETERI, (), target: GLenum, pname: GLenum, param: GLint];
     glfn![glUniform1i, GL_UNIFORM1I, (), location: GLint, v0: GLint];
     glfn![glUniform4f, GL_UNIFORM4F, (), location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat];
+    glfn![glUniformMatrix4fv, GL_UNIFORM_MATRIX4FV, (), location: GLint, count: GLsizei, transpose: GLboolean, value: *const GLfloat];
     glfn![glUseProgram, GL_USE_PROGRAM, (), program: GLuint];
     glfn![glVertexAttribPointer, GL_VERTEX_ATTRIB_POINTER, (), index: GLuint, size: GLint, typ: GLenum, normalized: GLboolean, stride: GLsizei, pointer: *const c_void];
     glfn![glViewport, GL_VIEWPORT, (), x: GLint, y: GLint, width: GLsizei, height: GLsizei];
@@ -184,6 +185,7 @@ pub struct Program(ffi::GLuint);
 
 /// Vertex array object.
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct VertexArray(ffi::GLuint);
 
 impl VertexArray {
@@ -195,6 +197,7 @@ impl VertexArray {
 
 /// Buffer object.
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct Buffer(ffi::GLuint);
 
 impl Buffer {
@@ -206,6 +209,7 @@ impl Buffer {
 
 /// Texture object.
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct Texture(ffi::GLuint);
 
 impl Texture {
@@ -221,7 +225,17 @@ pub enum Uniform {
     Int(i32),
 
     /// vec4 uniform parameter.
-    Vec4(f32, f32, f32, f32),
+    Vec4(Vec4<f32>),
+
+    /// mat4 uniform parameter.
+    Mat4 {
+        /// Matrix data.
+        v: Mat4<f32>,
+
+        /// Whether to transpose the matrix as the values are loaded
+        /// into the uniform variable
+        transpose: bool,
+    },
 }
 
 impl From<i32> for Uniform {
@@ -232,7 +246,7 @@ impl From<i32> for Uniform {
 
 impl From<Vec4<f32>> for Uniform {
     fn from(v: Vec4<f32>) -> Uniform {
-        Uniform::Vec4(v.0, v.1, v.2, v.3)
+        Uniform::Vec4(v)
     }
 }
 
@@ -294,12 +308,12 @@ pub fn attach_shader(program: Program, shader: Shader) {
 
 /// Binds a named buffer object.
 pub fn bind_buffer(target: u32, buffer: Buffer) {
-    unsafe { ffi::glBindBuffer(target as ffi::GLenum, buffer.0) }
+    unsafe { ffi::glBindBuffer(target, buffer.0) }
 }
 
 /// Binds a named texture to a texturing target.
 pub fn bind_texture(target: u32, texture: Texture) {
-    unsafe { ffi::glBindTexture(target as ffi::GLenum, texture.0) }
+    unsafe { ffi::glBindTexture(target, texture.0) }
 }
 
 /// Binds a vertex array object.
@@ -311,7 +325,7 @@ pub fn bind_vertex_array(array: VertexArray) {
 pub fn buffer_data<T>(target: u32, data: &[T], usage: u32) {
     unsafe {
         ffi::glBufferData(
-            target as ffi::GLenum,
+            target,
             mem::size_of_val(data),
             data.as_ptr() as *const c_void,
             usage,
@@ -460,7 +474,7 @@ pub fn gen_vertex_arrays(n: usize) -> Vec<VertexArray> {
 
 /// Generates mipmaps for a specified texture object.
 pub fn generate_mipmap(target: u32) {
-    unsafe { ffi::glGenerateMipmap(target as ffi::GLenum) }
+    unsafe { ffi::glGenerateMipmap(target) }
 }
 
 /// Returns the value of the error flag.
@@ -471,7 +485,7 @@ pub fn get_error() -> u32 {
 /// Returns the location of a uniform variable.
 pub fn get_uniform_location(program: Program, name: &str) -> Result<UniformLocation> {
     let cname = CString::new(name)?;
-    let loc = unsafe { ffi::glGetUniformLocation(program.0, cname.as_ptr() as *const ffi::GLchar) };
+    let loc = unsafe { ffi::glGetUniformLocation(program.0, cname.as_ptr()) };
     if loc == -1 {
         return Err(Error::NonActiveUniform(name.into()));
     }
@@ -513,13 +527,13 @@ pub fn tex_image_2d(
 ) {
     unsafe {
         ffi::glTexImage2D(
-            target as ffi::GLenum,
-            level as ffi::GLint,
+            target,
+            level,
             internal_format as ffi::GLint,
             image.width() as ffi::GLsizei,
             image.height() as ffi::GLsizei,
             0,
-            format as ffi::GLenum,
+            format,
             UNSIGNED_BYTE,
             image.pixels().as_ptr() as *const c_void,
         )
@@ -529,13 +543,7 @@ pub fn tex_image_2d(
 /// Sets texture parameters.
 pub fn tex_parameter(target: u32, pname: u32, param: TexParam) {
     match param {
-        TexParam::Int(param) => unsafe {
-            ffi::glTexParameteri(
-                target as ffi::GLenum,
-                pname as ffi::GLenum,
-                param as ffi::GLint,
-            )
-        },
+        TexParam::Int(param) => unsafe { ffi::glTexParameteri(target, pname, param) },
     }
 }
 
@@ -543,16 +551,12 @@ pub fn tex_parameter(target: u32, pname: u32, param: TexParam) {
 /// object.
 pub fn uniform(location: UniformLocation, uniform: Uniform) {
     match uniform {
-        Uniform::Int(v) => unsafe { ffi::glUniform1i(location.0, v as ffi::GLint) },
-        Uniform::Vec4(v0, v1, v2, v3) => unsafe {
-            ffi::glUniform4f(
-                location.0,
-                v0 as ffi::GLfloat,
-                v1 as ffi::GLfloat,
-                v2 as ffi::GLfloat,
-                v3 as ffi::GLfloat,
-            )
-        },
+        Uniform::Int(v) => unsafe { ffi::glUniform1i(location.0, v) },
+        Uniform::Vec4(v) => unsafe { ffi::glUniform4f(location.0, v[0], v[1], v[2], v[3]) },
+        Uniform::Mat4 { v, transpose } => {
+            let c_transpose: ffi::GLboolean = if transpose { 1 } else { 0 };
+            unsafe { ffi::glUniformMatrix4fv(location.0, 1, c_transpose, v.as_ptr()) }
+        }
     }
 }
 

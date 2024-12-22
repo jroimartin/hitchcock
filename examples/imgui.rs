@@ -4,7 +4,7 @@ use std::{mem, process};
 
 use hitchcock::{
     gl::{self, VertexArray},
-    glfw, imgui, Result, Vec2, Vec4,
+    glfw, imgui, Result, Vec4,
 };
 
 fn main() {
@@ -24,7 +24,7 @@ impl Default for App {
     fn default() -> App {
         App {
             window_open: true,
-            rect_color: Vec4(1.0, 0.5, 0.2, 1.0),
+            rect_color: [1.0, 0.5, 0.2, 1.0].into(),
         }
     }
 }
@@ -143,7 +143,11 @@ impl App {
             if self.window_open {
                 let main_viewport = imgui::get_main_viewport();
                 let workpos = main_viewport.get_workpos();
-                imgui::set_next_window_pos(Vec2(workpos.0 + 10.0, workpos.1 + 10.0), None, None);
+                imgui::set_next_window_pos(
+                    [workpos[0] + 10.0, workpos[1] + 10.0].into(),
+                    None,
+                    None,
+                );
                 if imgui::begin(
                     "Configuration",
                     Some(&mut self.window_open),

@@ -97,9 +97,9 @@ impl Image {
         let retval = unsafe {
             ffi::stbi_load(
                 filename.as_ptr(),
-                &mut c_width as *mut c_int,
-                &mut c_height as *mut c_int,
-                &mut c_channels as *mut c_int,
+                &mut c_width,
+                &mut c_height,
+                &mut c_channels,
                 0,
             )
         };
@@ -132,9 +132,9 @@ impl Image {
             ffi::stbi_load_from_memory(
                 buffer.as_ptr(),
                 buffer.len() as c_int,
-                &mut c_width as *mut c_int,
-                &mut c_height as *mut c_int,
-                &mut c_channels as *mut c_int,
+                &mut c_width,
+                &mut c_height,
+                &mut c_channels,
                 0,
             )
         };

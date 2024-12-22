@@ -64,50 +64,98 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {}
 
-/// Two-dimensional vector.
-#[derive(Copy, Clone)]
-pub struct Vec2<T>(pub T, pub T);
+macro_rules! define_vec {
+    ($name:ident, $n:expr) => {
+        #[doc = concat!($n, "-dimensional vector.")]
+        #[derive(Copy, Clone, Default)]
+        #[repr(C)]
+        pub struct $name<T>([T; $n]);
 
-impl<T> From<Vec2<T>> for [T; 2] {
-    fn from(v: Vec2<T>) -> [T; 2] {
-        [v.0, v.1]
-    }
+        impl<T> std::convert::From<$name<T>> for [T; $n] {
+            fn from(v: $name<T>) -> [T; $n] {
+                v.0
+            }
+        }
+
+        impl<T: std::marker::Copy> std::convert::From<[T; $n]> for $name<T> {
+            fn from(v: [T; $n]) -> $name<T> {
+                $name(v)
+            }
+        }
+
+        impl<T> std::ops::Deref for $name<T> {
+            type Target = [T];
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl<T> std::ops::DerefMut for $name<T> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+    };
 }
 
-impl<T: Copy> From<[T; 2]> for Vec2<T> {
-    fn from(v: [T; 2]) -> Vec2<T> {
-        Vec2(v[0], v[1])
-    }
+define_vec!(Vec2, 2);
+define_vec!(Vec3, 3);
+define_vec!(Vec4, 4);
+
+macro_rules! define_mat {
+    ($name:ident, $n:expr, $m:expr) => {
+        #[doc = concat!($n, "x", $m, " matrix.")]
+        #[derive(Copy, Clone, Default)]
+        #[repr(C)]
+        pub struct $name<T>([[T; $n]; $m]);
+
+        impl<T> std::convert::From<$name<T>> for [[T; $n]; $m] {
+            fn from(v: $name<T>) -> [[T; $n]; $m] {
+                v.0
+            }
+        }
+
+        impl<T: std::marker::Copy> std::convert::From<[[T; $n]; $m]> for $name<T> {
+            fn from(v: [[T; $n]; $m]) -> $name<T> {
+                $name(v)
+            }
+        }
+
+        impl<T> std::ops::Deref for $name<T> {
+            type Target = [[T; $n]];
+
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+
+        impl<T> std::ops::DerefMut for $name<T> {
+            fn deref_mut(&mut self) -> &mut Self::Target {
+                &mut self.0
+            }
+        }
+
+        impl<T> $name<T> {
+            /// Returns a raw pointer to the matrix data.
+            pub fn as_ptr(&self) -> *const T {
+                self.0.as_ptr() as *const T
+            }
+        }
+    };
 }
 
-/// Three-dimensional vector.
-#[derive(Copy, Clone)]
-pub struct Vec3<T>(pub T, pub T, pub T);
+define_mat!(Mat4, 4, 4);
 
-impl<T> From<Vec3<T>> for [T; 3] {
-    fn from(v: Vec3<T>) -> [T; 3] {
-        [v.0, v.1, v.2]
-    }
-}
-
-impl<T: Copy> From<[T; 3]> for Vec3<T> {
-    fn from(v: [T; 3]) -> Vec3<T> {
-        Vec3(v[0], v[1], v[2])
-    }
-}
-
-/// Four-dimensional vector.
-#[derive(Copy, Clone)]
-pub struct Vec4<T>(pub T, pub T, pub T, pub T);
-
-impl<T> From<Vec4<T>> for [T; 4] {
-    fn from(v: Vec4<T>) -> [T; 4] {
-        [v.0, v.1, v.2, v.3]
-    }
-}
-
-impl<T: Copy> From<[T; 4]> for Vec4<T> {
-    fn from(v: [T; 4]) -> Vec4<T> {
-        Vec4(v[0], v[1], v[2], v[3])
+impl Mat4<f32> {
+    /// Returns the identity matrix.
+    pub fn identity() -> Mat4<f32> {
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
     }
 }
